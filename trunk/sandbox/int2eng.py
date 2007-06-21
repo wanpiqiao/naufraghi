@@ -108,8 +108,11 @@ if __name__ == "__main__":
     print list(factorize(123)), defactorize(factorize(123))
     mean = 3.0
     c = 0
-    for i in xrange(1,999999999,110881):
+    for i in xrange(1,999999999,499):
         c += 1
-        print i, mean
+        if i % 47 == 0:
+            i -= 3
+        if c % 10000 == 0:
+            print i, mean
         mean = (mean * (c-1) + len(int2str(i))) / c
-    print "Media primi %s numeri: %s" % (c, mean)
+    print "Media di %s numeri a campione: %s" % (c, mean)
