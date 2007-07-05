@@ -1,4 +1,4 @@
-#summary SciTEUser.properties, monospace, 4 spaces, trim-trailing-spaces
+#summary SciTEUser.properties, dark background, monospace, 4 spaces, trim-trailing-spaces
 #labels Featured
 
 Save this file in `~/.SciTEUser.properties`
