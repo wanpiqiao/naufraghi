@@ -11,11 +11,17 @@ tabsize=4
 indent.size=4
 use.tabs=0
 
+# Save filters
 strip.trailing.spaces=1
 ensure.consistent.line.ends=1
+
+# Buffer handling
 buffers=100
 buffers.zorder.switching=1
+tabbar.multiline=1
+reload.preserves.undo=1
 
+# All monospace
 font.base=$(font.monospace)
 font.small=$(font.monospace)
 font.comment=$(font.monospace)
@@ -24,4 +30,51 @@ font.text.comment=$(font.monospace)
 font.embedded.base=$(font.monospace)
 font.embedded.comment=$(font.monospace)
 font.vbs=$(font.monospace)
+
+# Dark background
+style.*.32=$(font.base),back:#000000,fore:#ffffff
+caret.fore=#FFFFFF
+selection.alpha=90
+selection.back=#FFFFFF
+style.errorlist.32=$(font.small),back:#000000
+style.errorlist.0=fore:#FFFFFF
+
+# Python styles
+# White space
+style.python.0=fore:#808080
+# Comment
+style.python.1=fore:#007F00,$(font.comment)
+# Number
+style.python.2=fore:#007F7F
+# String
+style.python.3=fore:#FF777F,$(font.monospace)
+# Single quoted string
+style.python.4=fore:#FF777F,$(font.monospace)
+# Keyword
+style.python.5=fore:#7777FF,bold
+# Triple quotes
+style.python.6=fore:#7F0000
+# Triple double quotes
+style.python.7=fore:#7F0000
+# Class name definition
+style.python.8=fore:#0000FF,bold
+# Function or method name definition
+style.python.9=fore:#007F7F,bold
+# Operators
+style.python.10=bold
+# Identifiers
+style.python.11=
+# Comment-blocks
+style.python.12=fore:#7F7F7F
+# End of line where string is not closed
+style.python.13=fore:#000000,$(font.monospace),back:#E0C0E0,eolfilled
+# Highlighted identifiers
+style.python.14=fore:#407090
+# Decorators
+style.python.15=fore:#805000
+# Matched Operators
+style.python.34=fore:#0000FF,bold
+style.python.35=fore:#FF0000,bold
+# Braces are only matched in operator style
+braces.python.style=10
 }}}
