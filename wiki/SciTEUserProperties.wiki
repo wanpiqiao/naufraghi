@@ -4,22 +4,32 @@
 Save this file in `~/.SciTEUser.properties`
 
 {{{
-split.vertical=0
+# Window
+position.left=5
+position.top=22
+position.width=1024
+position.height=900
 
 # Indentation
 tabsize=4
 indent.size=4
 use.tabs=0
 
+# Find
+find.files=*.c *.cpp *.h *.py
+
 # Save filters
 strip.trailing.spaces=1
 ensure.consistent.line.ends=1
 
 # Buffer handling
+split.vertical=0
 buffers=100
 buffers.zorder.switching=1
 tabbar.multiline=1
 reload.preserves.undo=1
+line.margin.visible=1
+line.margin.width=3+
 
 # All monospace
 font.base=$(font.monospace)
