@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+#-*- coding: utf-8 -*-
+
+import os
+from os.path import *
+from subprocess import *
+import re
+
+# get last svnmerge integrated revision
+out = Popen("svnmerge integrated", stdout=PIPE, shell=True).communicate()[0]
+rev = re.findall("[0-9]+", out)[-1]
+print "Last integrated revision:", rev
+
+out = Popen("svn info", stdout=PIPE, shell=True).communicate()[0]
+# URL: svn+ssh://comelz/svn/caligola3d/branches/build_py
+# URL: svn+ssh://comelz/svn/caligola3d/trunk
+branch = re.search("URL: (.*)\n", out).group(1)
+print "Branch:", branch
+trunk = re.sub("branches/.*", "trunk", branch)
+print "Trunk:", trunk
+assert branch and trunk
+
+Popen("svn di %(trunk)s@%(rev)s %(branch)s" % locals(), shell=True).communicate()
