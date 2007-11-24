@@ -28,18 +28,16 @@ def process_files(filelist):
                 outname = srcfile + "." + frag.replace(" ","") + ".tm"
             else:
                 outname = srcfile + ".tm"            
-                try:
-                    if outname not in ["perceptron/perceptron.py.tm","perceptron/svg_paths.py.tm"]:
-                        tmsource = tmcolorizer.get_tmsource(srcfile, frag)
-                        tmfile = file("./tm/%s" % outname, "w+")
-                        tmfile.write(tmsource)
-                        tmfile.close()
-                        if __debug__:
-                            sys.stdout.write(".. %s\n" % frag)
-                            sys.stdout.flush()
-                except tmcolorizer.EmptyFragmentError:
-                    pass
-                sys.stdout.write("*** Done! ***\n")    
+            try:
+                tmsource = tmcolorizer.get_tmsource(srcfile, frag)
+                tmfile = file("./tm/%s" % outname, "w+")
+                tmfile.write(tmsource)
+                tmfile.close()
+                sys.stdout.write(".. %s\n" % outname)
+                sys.stdout.flush()
+            except tmcolorizer.EmptyFragmentError:
+                pass
+    sys.stdout.write("*** Done! ***\n")    
 
 def main():
     process_files(glob.glob("*.py"))
