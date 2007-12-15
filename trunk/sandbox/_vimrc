@@ -1,0 +1,152 @@
+" Copyright 2004, 2005 Develer S.r.l. (http://www.develer.com/)
+" All rights reserved.
+"
+" version: $Id: vimrc,v 1.21 2006/05/22 02:57:34 bernie Exp $
+" author: Bernardo Innocenti <bernie@develer.com>
+" author: Simone Zinanni <s.zinanni@develer.com>
+" author: Stefano Fedrigo <aleph@develer.com>
+"
+" $Log: vimrc,v $
+" Revision 1.21  2006/05/22 02:57:34  bernie
+" Remove clumsy tab completion function, done better by vim7.
+"
+" Revision 1.20  2006/02/27 22:38:53  bernie
+" Add a few more autocmds and import fixes from FC.
+"
+" Revision 1.19  2006/02/24 18:19:43  simone
+" Some useful settings for the python coding standard
+"
+" Revision 1.18  2005/09/21 21:37:45  bernie
+" Add CleverTab()
+"
+" Revision 1.17  2005/01/06 16:13:06  aleph
+" Useful vim option (absolutely neede for lisp :-) )
+"
+" Revision 1.16  2004/12/04 02:19:52  bernie
+" Merge in latest Fedora additions.
+"
+" Revision 1.15  2004/09/06 21:52:04  bernie
+" Pickup changes from Fedora version.
+"
+" Revision 1.14  2004/08/11 19:40:47  bernie
+" Re-enable C spacing errors.
+"
+" Revision 1.13  2004/06/20 19:13:38  bernie
+" Set a sane font for RedHat.
+"
+" Revision 1.12  2004/06/07 21:10:06  bernie
+" Remove all RedHat crap, re-enable spacing errors, set dark background by default.
+"
+" Revision 1.11  2004/06/07 20:28:41  simone
+" Add header
+"
+
+if v:lang =~ "utf8$" || v:lang =~ "UTF-8$"
+   set fileencodings=utf-8,latin1
+endif
+
+set nocompatible	" Use Vim defaults (much better!)
+set bs=2		" allow backspacing over everything in insert mode
+"set ai			" always set autoindenting on
+"set backup		" keep a backup file
+set viminfo='20,\"50	" read/write a .viminfo file, don't store more
+			" than 50 lines of registers
+set history=50		" keep 50 lines of command line history
+set ruler		" show the cursor position all the time
+
+" Only do this part when compiled with support for autocommands
+if has("autocmd")
+  " In text files, always limit the width of text to 78 characters
+  autocmd BufRead *.txt set tw=78
+  " When editing a file, always jump to the last cursor position
+  autocmd BufReadPost *
+  \ if line("'\"") > 0 && line ("'\"") <= line("$") |
+  \   exe "normal! g'\"" |
+  \ endif
+endif
+
+if has("cscope") && filereadable("/usr/bin/cscope")
+   set csprg=/usr/bin/cscope
+   set csto=0
+   set cst
+   set nocsverb
+   " add any database in current directory
+   if filereadable("cscope.out")
+      cs add cscope.out
+   " else add database pointed to by environment
+   elseif $CSCOPE_DB != ""
+      cs add $CSCOPE_DB
+   endif
+   set csverb
+endif
+
+" Switch syntax highlighting on, when the terminal has colors
+" Also switch on highlighting the last used search pattern.
+if &t_Co > 2 || has("gui_running")
+  syntax on
+  " bernie: Show matching parenthesis when writing
+  set showmatch
+  set hlsearch
+  set incsearch
+  highlight Normal guibg=#000030 guifg=#dddddd
+  set background=dark
+  " bernie: add bottom horizontal scroll bar
+  set guioptions+=b
+  " aleph: remove useless luser toolbar
+  set guioptions-=T
+  " aleph: mark spacing errors in C/Java sources
+  let c_space_errors=1
+  let java_space_errors=1
+endif
+
+if &term=="xterm"
+     set t_Co=8
+     set t_Sb=[4%dm
+     set t_Sf=[3%dm
+endif
+
+" bernie: insensitive search
+set ignorecase
+
+" bernie
+if has("gui_kde")
+	set guifont=Console\ 14
+else
+	set guifont=Console\ 14
+endif
+
+" bernie: horizontal and vertical scrolling
+set nowrap
+set sidescroll=1
+set sidescrolloff=8
+set scrolloff=3
+set listchars+=extends:>,precedes:<
+
+" bernie: indentation
+set smartindent
+
+" bernie: write on :n, :r, etc.
+set autowrite
+
+" bernie: mouse everywhere!
+if has("mouse")
+	set mouse=a
+endif
+
+" aleph: per non rompere le p*** a chi sta attorno ogni volta che si sbaglia tasto
+set visualbell
+" aleph: riduce al minimo la dimensione dei buffer non attivi
+set winminheight=0
+" aleph: dopo split e close gli altri buffer non si ridimensionano
+set noequalalways
+
+" bernie: status line
+set statusline=%<%f%h%m%r%=%b\ 0x%B\ \ %l,%c%V\ %P
+
+" aleph: mark spacing errors in C/Java sources
+autocmd FileType c,cpp  set tabstop=4|let c_space_errors=1
+autocmd FileType java   set tabstop=4|let java_space_errors=1
+autocmd FileType python set tabstop=4|set shiftwidth=4|set expandtab
+
+" bernie: enable loading filetype specific plugins and intendation mode
+filetype plugin indent on
