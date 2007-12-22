@@ -20,6 +20,9 @@ def get_frags_from_txt(code):
     return frags
 
 def process_files(filelist):
+    out_dir = "tm/"
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
     for srcfile in filelist:
         sys.stdout.write("Processing %s... \n" % srcfile)
         sys.stdout.flush()
@@ -30,7 +33,7 @@ def process_files(filelist):
                 outname = srcfile + ".tm"            
             try:
                 tmsource = tmcolorizer.get_tmsource(srcfile, frag)
-                tmfile = file("./tm/%s" % outname, "w+")
+                tmfile = file(os.path.join(out_dir, outname), "w+")
                 tmfile.write(tmsource)
                 tmfile.close()
                 sys.stdout.write(".. %s\n" % outname)
