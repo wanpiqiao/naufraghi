@@ -30,8 +30,7 @@ def list_recursive_files(basepath, glob_filter):
                     yield filename
 
 
-if __name__ == "__main__":
-    args = sys.argv[1:]
+def main(args):
     if len(args) < 2:
         print "Provide: searchre replacere [globfilter]"
         sys.exit(0)
@@ -59,3 +58,8 @@ if __name__ == "__main__":
                                                     filename + " (original)",
                                                     filename + " (modified)"))),
         sys.stderr.write("\n")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
+
