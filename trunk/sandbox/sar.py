@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
 
+"""
+Search and replace utility
+------------------------------------------
+Usage:
+    sar.py searchre replacere [globfilter]
+Output:
+    a patch -p0 < patch.diff
+"""
+
 import sys
 import os
 import os.path
