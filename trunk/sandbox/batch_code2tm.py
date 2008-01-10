@@ -1,6 +1,7 @@
 #!/usr/bin/python -O
 
-import os, sys, tmcolorizer, re, glob
+import os, sys, re, glob
+import tmcolorizer
 
 frag_re = re.compile("(?:--|#)start \*(?P<frag>[^\*]+)\*(.*)(?:--|#)end \*(?P=frag)\*", re.S)
 
