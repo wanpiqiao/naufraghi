@@ -17,8 +17,9 @@ def gen_samples(n=100, d=5, k=3):
 
 
 if __name__ == "__main__":
-    print "block, couple, sample"
-    for i, row in enumerate(gen_samples(n=10, d=2, k=3)):
+    samples = gen_samples(n=10, d=2, k=3)
+    print ", ".join(["feat%d" % f for f in range(len(samples[0][0]))] + ["couple"])
+    for i, row in enumerate(samples):
         for j, samp in enumerate(row):
             for k, v in enumerate(samp):
-                print ", ".join(map(str, [i, j] + list(v)))
+                print ", ".join(map(str, list(v))) + ", couple%d-%d" % (i, j)
