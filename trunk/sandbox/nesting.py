@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from __future__ import division
+
 import math
 
 TOLLERANCE = 1e-4
@@ -57,7 +59,7 @@ def isInner(p1, poly):
         newpoly = list(poly)    
         newpoly.insert(i+1, p1)
         res = acmp(area(poly), area(newpoly))
-        if res != 1:
+        if res != 1: # poly <= newpoly
             return res
     return 1
     
@@ -98,58 +100,86 @@ def doIntersect(seg1, seg2):
     True
     >>> doIntersect([P(0,0), P(1,1)], [P(2,2), P(2,0)]) # none
     False
+    >>> doIntersect([P(1,0), P(2,1)], [P(3,1), P(1,2)]) # test1
+    False
     """
     (p1, p2), (p3, p4) = seg1, seg2
     num1 = (p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)
     num2 = (p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)
-    den = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y)
+    den  = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y)
     if acmp(den, 0) == 0:
         if acmp(num1, 0) == 0 and acmp(num2, 0) == 0:
-            return True # segments are coincident
+            return True  # segments are coincident
         else:
             return False # segments are parallel
     else:
         ua = num1/den
         ub = num2/den
-        if ua < 0 or ua > 1 or ub < 0 or ub > 1:
-            return False
-        else:
+        if (0 <= ua <= 1) and (0 <= ub <= 1):
             return True
+        else:
+            return False
 
 
 def isOver(poly1, poly2):
     """
-    Returns 1 if poly1 overlaps poly1
-           -1 if poly2 is not over poly2
-            0 if poly1 and poly2 have a common vertex
+    Returns True if poly1 overlaps poly1
+            False if poly2 is not over poly2
+
     >>> poly1 = [P(0,0),P(1,0),P(2,1),P(0,1),P(0,0)]
-    >>> poly2a = [P(0.5,0.5),P(1,2),P(2,2),P(0.5,0.5)]
-    >>> isOver(poly1, poly2a)
-    1
-    >>> poly2b = [P(3,1),P(1,2),P(2,2),P(3,1)]
-    >>> isOver(poly1, poly2b)
-    -1
-    >>> poly2c = [P(2,1),P(1,2),P(2,2),P(2,1)]
-    >>> isOver(poly1, poly2c)
-    0
-    >>> poly2d = [P(1,1),P(2,0),P(2,1),P(1,1)]
-    >>> isOver(poly1, poly2d)
-    1
-    ####### una croce non funziona!! #######
-            p1 +++++
-               +   +
-        p2 +++++++++++++
-           +           +
-           +++++++++++++
-               +   +
-               +++++
+    >>> isOver(poly1, [P(0.5,0.5),P(1,2),P(2,2),P(0.5,0.5)]) # over
+    True
+
+      +++++
+      +    '+
+      +   o  '+
+      ++++oo++++
+          o o
+          oooo
+
+    >>> isOver(poly1, [P(3,1),P(1,2),P(2,2),P(3,1)]) # outside
+    False
+
+      +++++
+      +    '+
+      +      '+    o
+      ++++++++++ oo
+               o o 
+             oooo
+
+    >>> isOver(poly1, [P(2,1),P(1,2),P(2,2),P(2,1)]) # vertex
+    True
+
+      +++++
+      +    '+
+      +      '+
+      +++++++++o
+              oo
+             o o 
+            oooo
+
+    >>> isOver(poly1, [P(1,1),P(2,0),P(2,1),P(1,1)]) # border
+    True
+
+      +++++    o
+      +    '+ oo
+      +      o o
+      ++++++oooo
     """
     for p1 in poly1:
         overlap = isInner(p1, poly2)
         if overlap != -1:
-            return overlap
+            return True
     for p2 in poly2:
         overlap = isInner(p2, poly1)
         if overlap != -1:
-            return overlap
-    return -1
+            return True
+    for i in range(len(poly1)-1):
+        seg1 = poly1[i:i+2]
+        for k in range(len(poly2)-1):
+            seg2 = poly2[k:k+2]
+            if doIntersect(seg1, seg2):
+                return True
+    return False
+    
+    
