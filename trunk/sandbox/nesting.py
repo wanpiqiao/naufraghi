@@ -2,6 +2,8 @@
 
 import math
 
+TOLLERANCE = 1e-4
+
 class P:
     def __init__(self, x, y):
         self.x, self.y = x, y
@@ -54,11 +56,67 @@ def isInner(p1, poly):
     for i in range(len(poly)-1):
         newpoly = list(poly)    
         newpoly.insert(i+1, p1)
-        res = cmp(area(poly), area(newpoly))
+        res = acmp(area(poly), area(newpoly))
         if res != 1:
             return res
     return 1
     
+def acmp(val1, val2, tol=TOLLERANCE):
+    """
+    Approximated cmp
+    Returns 0 if values distance is less then `tol`
+    else    cmp(val1, val2)
+    
+    >>> val1, val2 = 0.001, 0.002
+    >>> acmp(val1, val2, tol=0.01)
+    0
+    >>> acmp(val1, val2, tol=0.0001) == cmp(val1, val2)
+    True
+    >>> acmp(val2, val1, tol=0.0001) == cmp(val2, val1)
+    True
+    """
+    if abs(val1 - val2) < tol:
+        return 0
+    return cmp(val1, val2)
+    
+
+def doIntersect(seg1, seg2):
+    """
+    Evaluate the intersection point of two segments exixts.
+    Returns True if intesects
+            False if does not intesect
+
+    >>> doIntersect([P(0,0), P(1,1)], [P(0,1), P(1,0)]) # cross
+    True
+    >>> doIntersect([P(0,0), P(1,1)], [P(0,0), P(1,1)]) # coincident
+    True
+    >>> doIntersect([P(0,0), P(1,1)], [P(0,1), P(1,2)]) # parallel
+    False
+    >>> doIntersect([P(0,0), P(1,1)], [P(1,1), P(1,0)]) # endpoint
+    True
+    >>> doIntersect([P(0,0), P(2,2)], [P(1,1), P(3,3)]) # partially coincident
+    True
+    >>> doIntersect([P(0,0), P(1,1)], [P(2,2), P(2,0)]) # none
+    False
+    """
+    (p1, p2), (p3, p4) = seg1, seg2
+    num1 = (p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)
+    num2 = (p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)
+    den = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y)
+    if acmp(den, 0) == 0:
+        if acmp(num1, 0) == 0 and acmp(num2, 0) == 0:
+            return True # segments are coincident
+        else:
+            return False # segments are parallel
+    else:
+        ua = num1/den
+        ub = num2/den
+        if ua < 0 or ua > 1 or ub < 0 or ub > 1:
+            return False
+        else:
+            return True
+
+
 def isOver(poly1, poly2):
     """
     Returns 1 if poly1 overlaps poly1
