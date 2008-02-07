@@ -20,7 +20,7 @@ msize = 10 * MEGA
 def getDirSize(dirname):
     res = 0
     for root, _, files in os.walk(dirname):
-        res += sum([os.path.getsize(os.path.join(root, f)) for f in files])
+        res += sum([os.path.getsize(os.path.join(root, f)) for f in files if os.path.isfile(f)])
     return res
 
 def getContentsStats(basepath):
