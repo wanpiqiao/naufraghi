@@ -18,7 +18,6 @@ def getDirSize(dirname):
     for root, _, files in os.walk(dirname):
         ifiles = [os.path.join(root, f) for f in files]
         res += sum([os.path.getsize(f) for f in ifiles if os.path.isfile(f)])
-    print dirname, res
     return res
 
 def getContentsStats(basepath):
@@ -30,6 +29,30 @@ def getContentsStats(basepath):
         else:
             return os.path.getsize(apath)
     return [(gsize(i), max(os.stat(i)[-3:]), i) for i in ls(".")]
+
+################################################################################
+# http://kassiopeia.juls.savba.sk/~garabik/software/pydf/
+################################################################################
+from math import log
+def hfnum(size, base):
+    "human readable number"
+    if size == 0:
+        return "0"
+    if size < 0:
+        return "?"
+    units = ["B", "k", "M", "G", "T", "P", "Z", "Y"]
+    power = int(log(size)/log(base))
+    if power<0:
+        power = 0
+    if power>=len(units):
+        power = len(units)-1
+    nsize = int(round(1.*size/(base**power)))
+    if nsize<10 and power>=1:
+        power -=1
+        nsize = int(round(1.*size/(base**power)))
+    r = str(nsize)+units[power]
+    return r
+################################################################################
 
 if __name__ == "__main__":
     from optparse import OptionParser
@@ -45,15 +68,17 @@ if __name__ == "__main__":
 
     os.chdir(os.path.expanduser("~/.Trash"))
     stats = getContentsStats(".")
-    trash_list = sorted([(size * mtime, name) for size, mtime, name in stats], reverse=True)
+    trash_list = sorted([(size * mtime, name, size) for size, mtime, name in stats], reverse=True)
     border_value = options.msize * MEGA * (time.time() - options.rtime * WEEK)
-    remove_list = [name for v, name in trash_list if v > border_value]
+    remove_list = [(name, size) for v, name, size in trash_list if v > border_value]
     print "#"*40
     print "# rtime = %d Weeks" % options.rtime
     print "# msize = %d Mb" % options.msize
     print "#"*40
-    for name in remove_list:
+    todel_size = 0
+    for name, size in remove_list:
         print os.path.isdir(name) and "[ DIR]" or "[FILE]",
+        todel_size += size
         if options.delete:
             print "REMOVING...",
             if os.path.isdir(name):
@@ -61,4 +86,7 @@ if __name__ == "__main__":
             else:
                 os.remove(name)
         print name
+    print "#"*40
+    print "# TOTAL size:", hfnum(todel_size, 1024)
+    print "#"*40
         
