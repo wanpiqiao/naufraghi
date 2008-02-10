@@ -16,7 +16,8 @@ MEGA = 1024 * 1024
 def getDirSize(dirname):
     res = 0
     for root, _, files in os.walk(dirname):
-        res += sum([os.path.getsize(os.path.join(root, f)) for f in files if os.path.isfile(f)])
+        ifiles = [os.path.join(root, f) for f in files]
+        res += sum([os.path.getsize(f) for f in ifiles if os.path.isfile(f)])
     print dirname, res
     return res
 
