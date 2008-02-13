@@ -6,15 +6,21 @@ import math
 
 TOLLERANCE = 1e-4
 
+
 class P:
     def __init__(self, x, y):
         self.x, self.y = x, y
     def __repr__(self):
         return "P(%f,%f)" % (self.x, self.y)
-        
+
+
 def dist(p1, p2):
+    """
+    Compute planar distance
+    """
     return math.sqrt((p1.x-p2.x)**2 + (p1.y-p2.y)**2)
-    
+
+
 def area(poly):
     """
     Compute polygon area using the trapezioid method
@@ -56,19 +62,19 @@ def isInner(p1, poly):
     0
     """
     for i in range(len(poly)-1):
-        newpoly = list(poly)    
+        newpoly = list(poly)
         newpoly.insert(i+1, p1)
         res = acmp(area(poly), area(newpoly))
         if res != 1: # poly <= newpoly
             return res
     return 1
-    
+
 def acmp(val1, val2, tol=TOLLERANCE):
     """
     Approximated cmp
     Returns 0 if values distance is less then `tol`
     else    cmp(val1, val2)
-    
+
     >>> val1, val2 = 0.001, 0.002
     >>> acmp(val1, val2, tol=0.01)
     0
@@ -80,7 +86,7 @@ def acmp(val1, val2, tol=TOLLERANCE):
     if abs(val1 - val2) < tol:
         return 0
     return cmp(val1, val2)
-    
+
 
 def doIntersect(seg1, seg2):
     """
@@ -144,7 +150,7 @@ def isOver(poly1, poly2):
       +    '+
       +      '+    o
       ++++++++++ oo
-               o o 
+               o o
              oooo
 
     >>> isOver(poly1, [P(2,1),P(1,2),P(2,2),P(2,1)]) # vertex
@@ -155,7 +161,7 @@ def isOver(poly1, poly2):
       +      '+
       +++++++++o
               oo
-             o o 
+             o o
             oooo
 
     >>> isOver(poly1, [P(1,1),P(2,0),P(2,1),P(1,1)]) # border
@@ -181,5 +187,7 @@ def isOver(poly1, poly2):
             if doIntersect(seg1, seg2):
                 return True
     return False
-    
-    
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
