@@ -66,7 +66,10 @@ if __name__ == "__main__":
                       help="Delete old/big files, default = %default")
     (options, args) = parser.parse_args()
 
-    os.chdir(os.path.expanduser("~/.Trash"))
+    if not args:
+        os.chdir(os.path.expanduser("~/.Trash"))
+    else:
+        os.chdir(args[0])
     stats = getContentsStats(".")
     trash_list = sorted([(size * mtime, name, size) for size, mtime, name in stats], reverse=True)
     border_value = options.msize * MEGA * (time.time() - options.rtime * WEEK)
@@ -76,8 +79,16 @@ if __name__ == "__main__":
     print "# msize = %d Mb" % options.msize
     print "#"*40
     todel_size = 0
+    if options.delete:
+        print "!! DELETE MODE !! Waiting 5 seconds..."
+        print "[",
+        for i in range(10):
+            sys.stdout.write("%d" % (i + 1))
+            sys.stdout.write(" . ")
+            sys.stdout.flush()
+            time.sleep(0.5)
+        print "]"
     for name, size in remove_list:
-        print os.path.isdir(name) and "[ DIR]" or "[FILE]",
         todel_size += size
         if options.delete:
             print "REMOVING...",
@@ -85,7 +96,7 @@ if __name__ == "__main__":
                 shutil.rmtree(name)
             else:
                 os.remove(name)
-        print name
+        print "[%4s %4s] %s" % ({True: "DIR", False: "FILE"}[os.path.isdir(name)], hfnum(size, 1024), name)
     print "#"*40
     print "# TOTAL size:", hfnum(todel_size, 1024)
     print "#"*40
