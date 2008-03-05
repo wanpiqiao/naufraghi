@@ -3,13 +3,16 @@
 from __future__ import division
 
 import math
+import numpy as N
 
 TOLLERANCE = 1e-4
 
 
 class P:
     def __init__(self, x, y):
-        self.x, self.y = x, y
+        self.x, self.y = float(x), float(y)
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
     def __repr__(self):
         return "P(%f,%f)" % (self.x, self.y)
 
@@ -187,6 +190,25 @@ def isOver(poly1, poly2):
             if doIntersect(seg1, seg2):
                 return True
     return False
+
+def boundingBox(poly):
+    """
+    Return the bounding box containing the give polygon
+    >>> boundingBox([P(0,0), P(1,1)]) == (P(0,0), P(1,1))
+    True
+    >>> boundingBox([P(1,1), P(0,0)]) == (P(0,0), P(1,1))
+    True
+    >>> boundingBox([P(0,0), P(1,1), P(2,0)]) == (P(0,0), P(2,1))
+    True
+    """
+    min_x, min_y = N.infty, N.infty
+    max_x, max_y = 0, 0
+    for p in poly:
+        min_x = min(min_x, p.x)
+        max_x = max(max_x, p.x)
+        min_y = min(min_y, p.y)
+        max_y = max(max_y, p.y)
+    return P(min_x, min_y), P(max_x, max_y)
 
 if __name__ == "__main__":
     import doctest
