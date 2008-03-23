@@ -270,13 +270,13 @@ def run():
     expand = expander(faces, [0,1,2,3], [0,1])
     print "Starting from state =", name_place(start_state[0])
     while True:
-        print "looping..."
-        print "states = [", ",\n".join([str(map(name_place, state)) for state in states]), "]"
+        print "looping...", len(states), "states..."
         _states = expand(states)
         if _states != states:
             states = _states
         else:
             break
+    print "states = [", ",\n".join([str(map(name_place, state)) for state in states]), "]"
     print "Done!!"
  
 if __name__ == "__main__":
@@ -288,12 +288,26 @@ if __name__ == "__main__":
         doctest.testmod()
 
 """
-Solutions:
+Test run:
 
+foucault:sandbox matteo$ time python cubetto.py solve
+faces =  ['f0', 'f1', 'f2', 'f3', 'f4', 'f5']
+Starting from state = (f0 0 0)
+looping... 1 states...
+looping... 16 states...
+looping... 150 states...
+looping... 136 states...
+looping... 24 states...
+looping... 6 states...
 states = [ ['(f0 0 0)', '(f1 1 1)', '(f3 3 0)', '(f2 0 0)', '(f4 3 0)', '(f5 0 0)'],
 ['(f0 0 0)', '(f1 1 1)', '(f3 3 0)', '(f2 3 1)', '(f4 3 0)', '(f5 0 0)'],
 ['(f0 0 0)', '(f4 1 1)', '(f3 3 0)', '(f2 0 0)', '(f1 3 0)', '(f5 0 0)'],
 ['(f0 0 0)', '(f4 1 1)', '(f3 3 0)', '(f2 3 1)', '(f1 3 0)', '(f5 0 0)'],
 ['(f0 0 0)', '(f5 2 1)', '(f2 2 1)', '(f4 1 0)', '(f3 2 0)', '(f1 1 1)'],
 ['(f0 0 0)', '(f5 2 1)', '(f2 3 0)', '(f4 1 0)', '(f3 2 0)', '(f1 1 1)'] ]
+Done!!
+
+real	0m0.221s
+user	0m0.204s
+sys	0m0.015s
 """
