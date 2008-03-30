@@ -202,35 +202,38 @@ def isValid(*args):
         return res
     return [isValid1, isValid2, isValid3, isValid4, isValid5][N-2](*args)
 
-# http://www.kuro5hin.org/story/2002/4/1/153/77985 ---------------------
-def combinations( L ):
-    N = len( L )
+# Modified http://www.kuro5hin.org/story/2002/4/1/153/77985 ---------------------
+def combinations(list_of_lists):
+    """
+    >>> combinations([[1,2],["a", "b"]])
+    [[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']]
+    """
+    N = len( list_of_lists )
     if N == 0:
         return []
     elif N == 1:
-        return [
-        L[0][i:i+1]
-        for i in xrange( 0, len( L[0] ) )
-    ]
+        return [[i] for i in list_of_lists[0]]
+
     else:
-        return [
-            L[0][i:i+1] + subcomb
-            for i in xrange( 0, len( L[0] ) )
-            for subcomb in combinations( L[1:] )
-        ]
+        return [[i] + subcomb for i in list_of_lists[0] 
+                for subcomb in combinations(list_of_lists[1:])]
  
-def permutations( L ):
-    N = len( L )
+def permutations(alist):
+    """
+    >>> permutations([1,2,3])
+    [[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]
+    """
+    N = len(alist)
     if N == 0:
         return []
     elif N == 1:
-        return [L]
+        return [alist]
     else:
         return [
-            L[i:i+1] + subperm
+            alist[i:i+1] + subperm
             for i in xrange( 0, N )
-            for subperm in permutations( L[:i] + L[i+1:] )
-        ]
+            for subperm in permutations(alist[:i] + alist[i+1:])
+       ]
 # ----------------------------------------------------------------------
 
 # place = (face, rotation, flip)
