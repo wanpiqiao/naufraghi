@@ -1,4 +1,4 @@
-<TeXmacs|1.0.6.12>
+<TeXmacs|1.0.6>
 
 <style|exam>
 
@@ -100,9 +100,9 @@
       N) for N in range(1,101)])
     </input>
 
-    <\input|python] >
-      \;
-    </input>
+    <\output>
+      \ (0.3678733405384419, 37)
+    </output>
   </session>>
 </body>
 
