@@ -24,56 +24,56 @@
   <\itemize-dot>
     <item>Le ragazze sono in ordine casuale di bellezza.
 
-    <item>Le bellezza sono uniche (non esistono due ragazze esattamente
+    <item>Le bellezze sono uniche (non esistono due ragazze esattamente
     ``belle'' uguale).
 
     <item>La bellezza è originata da una probabilità uniforme.
   </itemize-dot>
 
   Con queste ipotesi, proviamo la strategia di osservare N candidate e poi
-  segliere la prima pià bella delle N viste.
+  segliere la prima più bella delle N viste.
 
   Fissato N:
 
   <\itemize-arrow>
-    <item><math|<frac|N|100>> la 1<rsup|a> più bella è tra le prime N, il
+    <item><math|<frac|N|100>:> la 1<rsup|a> più bella è tra le prime N, il
     sultano ha sbagliato
 
-    <item><with|mode|math|<frac|100-N|100>> la 1<rsup|a> più bella è nella
+    <item><with|mode|math|<frac|100-N|100>>: la 1<rsup|a> più bella è nella
     seconda parte delle ragazze
 
     <\itemize-arrow>
-      <item><strong|<math|<frac|N|100>> la 2<rsup|a> più bella è tra le prime
-      N>
+      <item><strong|<math|<frac|N|100>>: la 2<rsup|a> più bella è tra le
+      prime N>
 
-      <item><with|mode|math|<frac|100-N|100>> la 2<rsup|a> più bella è nella
+      <item><with|mode|math|<frac|100-N|100>>: la 2<rsup|a> più bella è nella
       seconda parte delle ragazze
 
       <\itemize-arrow>
-        <item><math|<frac|N|100>> la 3<rsup|a> più bella è tra le prime N
+        <item><math|<frac|N|100>>: la 3<rsup|a> più bella è tra le prime N
 
         <\itemize-arrow>
-          <item><with|mode|math|<frac|1|2>> 2<rsup|a> \<less\> 1<rsup|a>
+          <item><with|mode|math|<frac|1|2>>: 2<rsup|a> \<less\> 1<rsup|a>
 
-          <item><strong|<with|mode|math|<frac|1|2>> 1<rsup|a> \<less\>
+          <item><strong|<with|mode|math|<frac|1|2>>: 1<rsup|a> \<less\>
           2<rsup|a>>
         </itemize-arrow>
 
-        <item><with|mode|math|<frac|100-N|100>> la 3<rsup|a> più bella è
+        <item><with|mode|math|<frac|100-N|100>>: la 3<rsup|a> più bella è
         nella seconda parte delle ragazze
 
         <\itemize-arrow>
-          <item><math|<frac|N|100>> la 4<rsup|a> più bella è tra le prime N
+          <item><math|<frac|N|100>>: la 4<rsup|a> più bella è tra le prime N
 
           <\itemize-arrow>
-            <item><with|mode|math|<frac|2|3>> (2<rsup|a>, 3<rsup|a>) \<less\>
-            1<rsup|a>
+            <item><with|mode|math|<frac|2|3>>: (2<rsup|a>, 3<rsup|a>)
+            \<less\> 1<rsup|a>
 
-            <item><strong|<with|mode|math|<frac|1|3>> 1<rsup|a> \<less\>
+            <item><strong|<with|mode|math|<frac|1|3>>: 1<rsup|a> \<less\>
             (2<rsup|a>, 3<rsup|a>)>
           </itemize-arrow>
 
-          <item><with|mode|math|<frac|100-N|100>> la 4<rsup|a> più bella è
+          <item><with|mode|math|<frac|100-N|100>>: la 4<rsup|a> più bella è
           nella seconda parte delle ragazze
 
           <\itemize-arrow>
@@ -100,9 +100,9 @@
       N) for N in range(1,101)])
     </input>
 
-    <\output>
-      \ (0.3678733405384419, 37)
-    </output>
+    <\input|python] >
+      \;
+    </input>
   </session>>
 </body>
 
