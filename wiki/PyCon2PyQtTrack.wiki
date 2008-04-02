@@ -1,4 +1,4 @@
-#labels Phase-Design
+#labels Phase-Design,Featured,python,pyqt,pycon
 = !PyQt Track per il !PyCon2 =
 
 Tempi: 1h di contenuti + 30m di tempo per gli interventi
