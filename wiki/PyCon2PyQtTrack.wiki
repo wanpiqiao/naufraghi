@@ -1,13 +1,11 @@
 #labels Phase-Design
-#PyQt Track per il PyCon2
-
-= PyQt Track per il PyCon2 =
+= !PyQt Track per il !PyCon2 =
 
 Tempi: 1h di contenuti + 30m di tempo per gli interventi
 
 = Organizzazione =
 
- * Presentazione features di Qt, esempi scelti dal QtDemo
+ * Presentazione features di Qt, esempi scelti dal !QtDemo
   * Grafica
   * Stampa
   * i18n
