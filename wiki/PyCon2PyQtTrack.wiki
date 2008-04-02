@@ -3,6 +3,18 @@
 
 Tempi: 1h di contenuti + 30m di tempo per gli interventi
 
+= Introduzione =
+
+Il tutorial copre la realizzazione di due semplici applicazioni Qt, una !ToDo list e un Gui per giocare a Sudoku.
+L'intento è di presentare alcune delle caratteristiche vincenti del framework Qt, in particolare:
+ * Signal e Slot
+ * QWidget
+ * QSettings
+ * Designer
+ * QStyleSheet
+ * QPainter
+
+
 = Organizzazione =
 
  * Presentazione features di Qt, esempi scelti dal !QtDemo
