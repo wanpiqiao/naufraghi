@@ -1,0 +1,24 @@
+#labels Phase-Design
+#PyQt Track per il PyCon2
+
+= PyQt Track per il PyCon2 =
+
+Tempi: 1h di contenuti + 30m di tempo per gli interventi
+
+= Organizzazione =
+
+ * Presentazione features di Qt, esempi scelti dal QtDemo
+  * Grafica
+  * Stampa
+  * i18n
+
+ * Creazione di una semplice applicazione
+  * Todo manager, con topic, priorità e scadenza
+  * GUI facile senza Designer
+  * QSettings
+  * QStyleSheet
+  * Signals e Slots
+
+ * Potenzialità del Designer e del QPainter
+  * Gioco Sudoku
+  * Stampa Sudoku
