@@ -16,22 +16,18 @@ class Todo(QWidget):
         vbl.addWidget(self.le)
 
         # Connect widgets
-        QObject.connect(self.le, SIGNAL("editingFinished()"), lambda: self.lw.addItem(self.le.text()))
-        QObject.connect(self.le, SIGNAL("editingFinished()"), self.le.clear)
+        QObject.connect(self.le, SIGNAL("returnPressed()"), lambda: self.lw.addItem(self.le.text()))
+        QObject.connect(self.le, SIGNAL("returnPressed()"), self.le.clear)
 
-        QObject.connect(self.lw, SIGNAL("itemDoubleClicked(QListWidgetItem *)"), self.edit) #lambda i: self.le.setText(i.text()))
-        #QObject.connect(self.lw, SIGNAL("itemDoubleClicked(QListWidgetItem *)"), self.lw.removeItemWidget)
+        QObject.connect(self.lw, SIGNAL("itemDoubleClicked(QListWidgetItem *)"), self.edit)
 
     def edit(self, i):
-        #self.le.setText(i.text())
-        #print i
-        #j = self.lw.row(i)
-        #print j
-        #ii = self.lw.takeItem(j)
-        #print ii
+        self.lw.takeItem(self.lw.row(i))
+        self.lw.setCurrentItem(None)
 
         self.le.setText(i.text())
-        self.lw.removeItemWidget(i)
+        self.le.selectAll()
+        self.le.setFocus()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
