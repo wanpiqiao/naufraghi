@@ -10,14 +10,28 @@ class Todo(QWidget):
 
         # Build the view
         vbl = QVBoxLayout(self)
-        lw = QListWidget(None)
-        le = QLineEdit(None)
-        vbl.addWidget(lw)
-        vbl.addWidget(le)
+        self.lw = QListWidget(None)
+        self.le = QLineEdit(None)
+        vbl.addWidget(self.lw)
+        vbl.addWidget(self.le)
 
         # Connect widgets
-        QObject.connect(le, SIGNAL("editingFinished()"), lambda: lw.addItem(le.text()))
-        QObject.connect(le, SIGNAL("editingFinished()"), le.clear)
+        QObject.connect(self.le, SIGNAL("editingFinished()"), lambda: self.lw.addItem(self.le.text()))
+        QObject.connect(self.le, SIGNAL("editingFinished()"), self.le.clear)
+
+        QObject.connect(self.lw, SIGNAL("itemDoubleClicked(QListWidgetItem *)"), self.edit) #lambda i: self.le.setText(i.text()))
+        #QObject.connect(self.lw, SIGNAL("itemDoubleClicked(QListWidgetItem *)"), self.lw.removeItemWidget)
+
+    def edit(self, i):
+        #self.le.setText(i.text())
+        #print i
+        #j = self.lw.row(i)
+        #print j
+        #ii = self.lw.takeItem(j)
+        #print ii
+
+        self.le.setText(i.text())
+        self.lw.removeItemWidget(i)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
