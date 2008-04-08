@@ -11,19 +11,15 @@ import string
 random.seed(0)
 
 # calculate a random number where:  a <= rand < b
-def rand(a, b):
-    return (b-a)*random.random() + a
+rand = random.uniform
 
 # Make a matrix (we could use NumPy to speed this up)
 def makeMatrix(I, J, fill=0.0):
-    m = []
-    for i in range(I):
-        m.append([fill]*J)
+    m = [[fill]*J for i in range(I)]
     return m
 
 # our sigmoid function, tanh is a little nicer than the standard 1/(1+e^-x)
-def sigmoid(x):
-    return math.tanh(x)
+sigmoid = math.tanh
 
 # derivative of our sigmoid function
 def dsigmoid(y):
@@ -56,6 +52,7 @@ class NN:
         self.ci = makeMatrix(self.ni, self.nh)
         self.co = makeMatrix(self.nh, self.no)
 
+
     def update(self, inputs):
         if len(inputs) != self.ni-1:
             raise ValueError, 'wrong number of inputs'
@@ -67,17 +64,13 @@ class NN:
 
         # hidden activations
         for j in range(self.nh):
-            sum = 0.0
-            for i in range(self.ni):
-                sum = sum + self.ai[i] * self.wi[i][j]
-            self.ah[j] = sigmoid(sum)
+            value = sum([self.ai[i] * self.wi[i][j] for i in range(self.ni)])
+            self.ah[j] = sigmoid(value)
 
         # output activations
         for k in range(self.no):
-            sum = 0.0
-            for j in range(self.nh):
-                sum = sum + self.ah[j] * self.wo[j][k]
-            self.ao[k] = sigmoid(sum)
+            value = sum([self.ah[j] * self.wo[j][k] for j in range(self.nh)])
+            self.ao[k] = sigmoid(value)
 
         return self.ao[:]
 
@@ -95,9 +88,7 @@ class NN:
         # calculate error terms for hidden
         hidden_deltas = [0.0] * self.nh
         for j in range(self.nh):
-            error = 0.0
-            for k in range(self.no):
-                error = error + output_deltas[k]*self.wo[j][k]
+            error = sum([output_deltas[k]*self.wo[j][k] for k in range(self.no)])
             hidden_deltas[j] = dsigmoid(self.ah[j]) * error
 
         # update output weights
@@ -116,15 +107,14 @@ class NN:
                 self.ci[i][j] = change
 
         # calculate error
-        error = 0.0
-        for k in range(len(targets)):
-            error = error + 0.5*(targets[k]-self.ao[k])**2
+        error = sum([0.5*(targets[k]-self.ao[k])**2 for k in range(len(targets))])
         return error
 
 
     def test(self, patterns):
         for p in patterns:
             print p[0], '->', self.update(p[0])
+
 
     def weights(self):
         print 'Input weights:'
@@ -134,6 +124,7 @@ class NN:
         print 'Output weights:'
         for j in range(self.nh):
             print self.wo[j]
+
 
     def train(self, patterns, iterations=1000, N=0.5, M=0.1):
         # N: learning rate
