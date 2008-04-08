@@ -12,32 +12,39 @@ class Todo(QWidget):
 
         # Build the view
         vbl = QVBoxLayout(self)
-        self.lw = QListWidget(None)
+        self.lv = QListView(None)
+        self.lm = QStringListModel(None)
+        self.lv.setModel(self.lm)
         self.le = QLineEdit(None)
-        vbl.addWidget(self.lw)
+        vbl.addWidget(self.lv)
         vbl.addWidget(self.le)
 
-        # Fill the view
-        for todo in self.settings.allKeys():
-            self.lw.addItem(self.settings.value(todo).toString())
+        # Fill the view        
+        self.lm.setStringList([self.settings.value(todo).toString() for todo in self.settings.allKeys()])
 
         # Connect widgets
-        QObject.connect(self.le, SIGNAL("returnPressed()"), lambda: self.lw.addItem(self.le.text()))
+        QObject.connect(self.le, SIGNAL("returnPressed()"), self.insert)
         QObject.connect(self.le, SIGNAL("returnPressed()"), self.le.clear)
 
-        QObject.connect(self.lw, SIGNAL("itemDoubleClicked(QListWidgetItem *)"), self.edit)
+        QObject.connect(self.lv, SIGNAL("doubleClicked(const QModelIndex &)"), self.edit)
+        
+    def insert(self):
+        self.lm.insertRows(0, 1)
+        self.lm.setData(self.lm.index(0), QVariant(self.le.text()), Qt.DisplayRole)
 
-    def edit(self, i):
-        self.lw.takeItem(self.lw.row(i))
-        self.lw.setCurrentItem(None)
+    def edit(self, mi):
+        self.le.setText(self.lm.data(mi, Qt.DisplayRole).toString())
 
-        self.le.setText(i.text())
+        self.lm.removeRows(mi.row(), 1)
+        self.lv.clearSelection()
+
         self.le.selectAll()
         self.le.setFocus()
 
     def closeEvent(self, event):
-        for i in xrange(self.lw.count()):
-            self.settings.setValue(u"todo/%d" % (i,), QVariant(self.lw.item(i).text()))
+        self.settings.clear()
+        for i, item in enumerate(self.lm.stringList()):
+            self.settings.setValue(u"todo/%d" % (i,), QVariant(item))
             
 
 if __name__ == "__main__":
