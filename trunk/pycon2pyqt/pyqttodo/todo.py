@@ -7,7 +7,7 @@ from PyQt4.Qt import *
 class Todo(QWidget):
     def __init__(self, *args):
         super(Todo, self).__init__(*args)
-
+        self.setWindowTitle(self.tr("PyConDue"))
         self.settings = QSettings(QSettings.IniFormat, QSettings.UserScope, "PyConDue", "ToDo", self)
 
         # Build the view
@@ -38,6 +38,7 @@ class Todo(QWidget):
     def closeEvent(self, event):
         for i in xrange(self.lw.count()):
             self.settings.setValue(u"todo/%d" % (i,), QVariant(self.lw.item(i).text()))
+            
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
