@@ -30,7 +30,14 @@ class UnicodePDFDemo(QWidget):
         if dialog.exec_() != QDialog.Accepted:
             return
 
-        self.te.print_(printer)
+        #self.te.print_(printer)
+        
+        # Tests for printing the whole widget
+        self.render(printer)
+
+        im = QImage(self.size(), QImage.Format_ARGB32)
+        self.render(im)
+        im.save("prova.png")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
