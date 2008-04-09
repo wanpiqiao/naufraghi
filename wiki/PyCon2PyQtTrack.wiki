@@ -33,6 +33,8 @@ L'intento è di presentare alcune delle caratteristiche vincenti del framework Q
   * Gioco Sudoku
   * Stampa Sudoku
 
+ * Impacchettamento con !PyInstaller sviluppati per la presentazione.
+
 = Idee forse da integrare =
 
-Gotcha sul funzionamento di super() su classi PyQt: http://docs.huihoo.com/pyqt/pyqt4.html#super-and-pyqt-classes
+Gotcha sul funzionamento di super() su classi !PyQt: http://docs.huihoo.com/pyqt/pyqt4.html#super-and-pyqt-classes
