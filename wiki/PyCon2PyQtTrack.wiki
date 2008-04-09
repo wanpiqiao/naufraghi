@@ -32,3 +32,7 @@ L'intento è di presentare alcune delle caratteristiche vincenti del framework Q
  * Potenzialità del Designer e del QPainter
   * Gioco Sudoku
   * Stampa Sudoku
+
+= Idee forse da integrare =
+
+Gotcha sul funzionamento di super() su classi PyQt: http://docs.huihoo.com/pyqt/pyqt4.html#super-and-pyqt-classes
