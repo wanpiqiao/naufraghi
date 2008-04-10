@@ -29,8 +29,7 @@ main (int argc, char *argv[])
 	PerceptronNetwork *	net;
 	RandomInterval	ival = { -1.0, 1.0 };
 	RandomFunction	rf =
-		{ (const double (*)(void *)) RandomFunctions::rand_normal,
-			&ival };
+		{ (const double (*)(void *)) RandomFunctions::rand_normal, &ival };
 
 
 	RandomFunctions::rand_init ();
@@ -61,10 +60,10 @@ static void
 testNetwork (PerceptronNetwork *net)
 {
 	unsigned int	n,
-			on;
+					on;
 	vector<double>	input = vector<double> (2);
 	vector<double>	output;
-	vector<double>	optimal = vector<double> (3);
+	vector<double>	test = vector<double> (3);
 #define	TRAIN_LOW	(-3.14)
 #define	TRAIN_HIGH	(3.14)
 	RandomInterval	ival = { TRAIN_LOW, TRAIN_HIGH };
@@ -77,8 +76,7 @@ testNetwork (PerceptronNetwork *net)
 
 	fstream train ("training.dat", ios::out | ios::trunc);
 	for (n = 0 ; n < train_input.size () ; ++n) {
-		train_input[n] = n * ((TRAIN_HIGH - TRAIN_LOW) / TRAIN_SIZE) +
-			TRAIN_LOW;
+		train_input[n] = n * ((TRAIN_HIGH - TRAIN_LOW) / TRAIN_SIZE) + TRAIN_LOW;
 
 		switch (n % 3) {
 		case (0):
@@ -106,16 +104,16 @@ testNetwork (PerceptronNetwork *net)
 
 		switch (train_type[on]) {
 		case (0):
-			optimal[0] = 1;
-			optimal[1] = optimal[2] = 0;
+			test[0] = 1;
+			test[1] = test[2] = 0;
 			break;
 		case (1):
-			optimal[0] = optimal[2] = 0;
-			optimal[1] = 1;
+			test[0] = test[2] = 0;
+			test[1] = 1;
 			break;
 		case (2):
-			optimal[0] = optimal[1] = 0;
-			optimal[2] = 1;
+			test[0] = test[1] = 0;
+			test[2] = 1;
 			break;
 		}
 
@@ -131,7 +129,7 @@ testNetwork (PerceptronNetwork *net)
 		for (on = 0 ; on < output.size () ; ++on)
 			cout << "out: " << on << "\t" << output[on] << endl;
 
-		net->setOptimalOutput (optimal);
+		net->setTestOutput (test);
 		cout << n << "\t" << net->errorTerm () << "\t# errorterm" << endl;
 
 		net->backpropagate ();

@@ -17,21 +17,22 @@ using namespace std;
 
 
 PerceptronNetwork::PerceptronNetwork (vector<unsigned int> desc_layers,
-	const char *network_name, const ActivationFunction *fact)
+									  const char *network_name,
+									  const ActivationFunction *fact)
 {
 	unsigned int	n,
-			neuron;
+					neuron;
 
 	assert (desc_layers.size () >= 2);
 
 	name = network_name;
-	epsilon = opt_tolerance = weight_decay = momentum_term = 0.0;
+	epsilon = test_tolerance = weight_decay = momentum_term = 0.0;
 
 	/* create public input/output interface arrays
 	 */
 	input = vector<double> (desc_layers[0]);
 	output = vector<double> (desc_layers[desc_layers.size () - 1]);
-	output_optimal = vector<double> (desc_layers[desc_layers.size () - 1]);
+	test_output = vector<double> (desc_layers[desc_layers.size () - 1]);
 
 	/* create internal layer representation
 	 */
@@ -80,9 +81,9 @@ PerceptronNetwork::PerceptronNetwork (PerceptronNetwork& source)
 	name = source.name;
 	input = source.input;
 	output = source.output;
-	output_optimal = source.output_optimal;
+	test_output = source.test_output;
 	epsilon = source.epsilon;
-	opt_tolerance = source.opt_tolerance;
+	test_tolerance = source.test_tolerance;
 	weight_decay = source.weight_decay;
 	momentum_term = source.momentum_term;
 
@@ -94,13 +95,12 @@ PerceptronNetwork::PerceptronNetwork (PerceptronNetwork& source)
 PerceptronNetwork::PerceptronNetwork (void)
 {
 	name = NULL;
-	epsilon = opt_tolerance = weight_decay = momentum_term = 0.0;
+	epsilon = test_tolerance = weight_decay = momentum_term = 0.0;
 }
 
 
 void
-PerceptronNetwork::setActivationFunction (PerceptronLayerType type,
-	const ActivationFunction *fact)
+PerceptronNetwork::setActivationFunction (PerceptronLayerType type, const ActivationFunction *fact)
 {
 	for (unsigned int ln = 0 ; ln < layers.size () ; ++ln) {
 		if (layers[ln]->type != type)
@@ -116,10 +116,10 @@ PerceptronNetwork::load (fstream &fs)
 {
 	char		act_str[16];
 	unsigned int	layer_count,
-			neuron_count,
-			ln,		/* layer index */
-			nn,		/* neuron index */
-			sn;		/* successor neuron index */
+					neuron_count,
+					ln,		/* layer index */
+					nn,		/* neuron index */
+					sn;		/* successor neuron index */
 	PerceptronLayer *	lay = NULL;
 	const ActivationFunction *	fact;
 
@@ -187,7 +187,7 @@ PerceptronNetwork::load (fstream &fs)
 
 	input = vector<double> (layers[0]->neurons.size ());
 	output = vector<double> (layers[layers.size () - 1]->neurons.size ());
-	output_optimal = output;
+	test_output = output;
 
 	return (true);
 }
@@ -197,8 +197,8 @@ void
 PerceptronNetwork::save (fstream& fs) const
 {
 	unsigned int		ln,	/* layer index */
-				nn,	/* neuron index */
-				sn;	/* succeeding neuron index */
+						nn,	/* neuron index */
+						sn;	/* succeeding neuron index */
 	PerceptronLayer *	lay;
 
 	/* an 80 bit double (ia32): 64 bit mantissa / 15 bit exponent, can
@@ -238,13 +238,12 @@ PerceptronNetwork::save (fstream& fs) const
 
 void
 PerceptronNetwork::randomizeParameters (const RandomFunction *weight_func,
-	const RandomFunction *theta_func)
+										const RandomFunction *theta_func)
 {
 	unsigned int	ln;
 
 	for (ln = 0 ; ln < (layers.size () - 1) ; ++ln) {
-		layers[ln]->randomizeParameters (layers[ln + 1],
-			weight_func, theta_func);
+		layers[ln]->randomizeParameters (layers[ln + 1], weight_func, theta_func);
 	}
 
 	/* the last layer has no successor
@@ -261,9 +260,9 @@ PerceptronNetwork::setInput (vector<double>& in)
 
 
 void
-PerceptronNetwork::setOptimalOutput (vector<double>& optimal)
+PerceptronNetwork::setTestOutput (vector<double>& test)
 {
-	output_optimal = optimal;
+	test_output = test;
 }
 
 
@@ -289,7 +288,7 @@ PerceptronNetwork::errorTerm (void) const
 	 */
 	error = 0.0;
 	for (nn = 0 ; nn < outlay->neurons.size () ; ++nn) {
-		suberr = (output_optimal[nn] - outlay->neurons[nn]->output);
+		suberr = (test_output[nn] - outlay->neurons[nn]->output);
 		error += suberr * suberr;
 	}
 
@@ -346,8 +345,7 @@ PerceptronNetwork::backpropagate (void)
 	/* walk the layers, starting at the output layer
 	 */
 	for (ln = (layers.size () - 1) ; ln > 0 ; --ln) {
-		layers[ln]->backpropagate (succ, output_optimal,
-			opt_tolerance);
+		layers[ln]->backpropagate (succ, test_output, test_tolerance);
 		succ = layers[ln];
 	}
 }
@@ -367,8 +365,7 @@ PerceptronNetwork::postprocess (void)
 		else
 			succ = layers[n + 1];
 
-		layers[n]->postprocess (succ, epsilon, weight_decay,
-			momentum_term);
+		layers[n]->postprocess (succ, epsilon, weight_decay, momentum_term);
 	}
 }
 
@@ -385,9 +382,9 @@ void
 PerceptronNetwork::dumpNetworkGraph (const char *filename) const
 {
 	unsigned int	ln,	/* layer index */
-			nn,	/* neuron index */
-			snn,	/* successor neuron index */
-			wd;	/* neuron weight diff index */
+					nn,	/* neuron index */
+					snn,	/* successor neuron index */
+					wd;	/* neuron weight diff index */
 	fstream	dotf (filename, ios::out | ios::trunc);
 
 	dotf << "digraph Network {" << endl;
@@ -469,17 +466,17 @@ PerceptronNetwork::setLearningParameter (double epsilon)
 
 
 double
-PerceptronNetwork::getOptimalTolerance (void) const
+PerceptronNetwork::getTestTolerance (void) const
 {
-	return (opt_tolerance);
+	return (test_tolerance);
 }
 
 
 void
-PerceptronNetwork::setOptimalTolerance (double tolerance)
+PerceptronNetwork::setTestTolerance (double tolerance)
 {
 	assert (tolerance >= 0.0 && tolerance <= 0.2);
-	opt_tolerance = tolerance;
+	test_tolerance = tolerance;
 }
 
 

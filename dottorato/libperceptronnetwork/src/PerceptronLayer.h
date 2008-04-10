@@ -103,12 +103,12 @@ public:
 	 * Compute the delta value for all neurons within this layer.
 	 *
 	 * @param succ Succeeding layer to this one, can be NULL.
-	 * @param output_optimal Optimal expected output for the last layer
+	 * @param test_output Test expected output for the last layer
 	 * (output).
-	 * @param opt_tolerance The optimal difference tolerance parameter.
+	 * @param test_tolerance The test difference tolerance parameter.
 	 */
 	void backpropagate (PerceptronLayer *succ,
-		vector<double> &output_optimal, double opt_tolerance);
+		vector<double> &test_output, double test_tolerance);
 
 	/** Postprocess algorithm for a single layer.
 	 *
@@ -119,7 +119,7 @@ public:
 	 * @param momterm Momentum term factor.
 	 */
 	void postprocess (PerceptronLayer *succ, double epsilon,
-		double weight_decay, double momterm);
+		              double weight_decay, double momterm);
 
 	/** Update algorithm for a single layer.
 	 */

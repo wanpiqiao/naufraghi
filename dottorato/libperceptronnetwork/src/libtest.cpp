@@ -71,7 +71,7 @@ main (int argc, char *argv[])
 */
 	if (argc == 2)
 		net->setWeightDecayParameter (atof (argv[1]));
-//	net->setOptimalTolerance (0.05);
+//	net->setTestTolerance (0.05);
 //	net->setWeightDecayParameter (0.00004);
 
 	testNetwork (net);
@@ -84,10 +84,10 @@ static void
 testNetwork (PerceptronNetwork *net)
 {
 	unsigned int	n,
-			on;
+					on;
 	vector<double>	input = vector<double> (1);
 	vector<double>	output;
-	vector<double>	optimal = vector<double> (1);
+	vector<double>	test = vector<double> (1);
 #define	TRAIN_LOW	(-3.14)
 #define	TRAIN_HIGH	(3.14)
 //	RandomInterval	ival = { TRAIN_LOW, TRAIN_HIGH };
@@ -111,11 +111,11 @@ testNetwork (PerceptronNetwork *net)
 	for (n = 0 ; n < TRAIN_LENGTH ; ++n) {
 		on = n % TRAIN_SIZE;
 		input[0] = train_input[on];
-		optimal[0] = train_output[on];
+		test[0] = train_output[on];
 		/* alternative: random on each case
 		 */
 //		input[0] = RandomFunctions::rand_normal (&ival);
-//		optimal[0] = sin (input[0]);
+//		test[0] = sin (input[0]);
 
 /*		cout << "input = { ";
 		for (on = 0 ; on < input.size () ; ++on)
@@ -129,8 +129,8 @@ testNetwork (PerceptronNetwork *net)
 /*		for (on = 0 ; on < output.size () ; ++on)
 			cout << "out: " << on << "\t" << output[on] << endl;
 */
-//		cout << "optimal: " << optimal[0] << endl;
-		net->setOptimalOutput (optimal);
+//		cout << "test: " << test[0] << endl;
+		net->setTestOutput (test);
 //		cout << n << "\t" << net->errorTerm () << "\t# errorterm" << endl;
 
 		net->backpropagate ();
@@ -158,8 +158,8 @@ testNetwork (PerceptronNetwork *net)
 		cout << input[0] << "\t"
 			<< output[0] << "\t# gnuplot" << endl;
 
-		optimal[0] = train_output[on];
-		net->setOptimalOutput (optimal);
+		test[0] = train_output[on];
+		net->setTestOutput (test);
 		error_sum += net->errorTerm ();
 	}
 	error_sum /= TRAIN_SIZE;

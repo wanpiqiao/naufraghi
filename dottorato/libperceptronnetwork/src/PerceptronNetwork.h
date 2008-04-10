@@ -124,14 +124,14 @@ public:
 	 */
 	void setInput (vector<double>& in);
 
-	/** Setter for the optimal requested network output.
+	/** Setter for the requested network output.
 	 *
 	 * Must be used before any learning algorithm is called
 	 * (backpropagate).
 	 *
-	 * @param optimal Optimal network output for the current input.
+	 * @param test Test network output for the current input.
 	 */
-	void setOptimalOutput (vector<double>& optimal);
+	void setTestOutput (vector<double>& test);
 
 	/** Getter for the entire network output.
 	 */
@@ -140,7 +140,7 @@ public:
 	/** Calculate the errorterm for the network
 	 *
 	 * The error value for the current output is calculated. The current
-	 * optimal output must be given prior to calling this function.
+	 * test output must be given prior to calling this function.
 	 *
 	 * The formula used is \f$E = \frac{1}{2} \sum_{i} \left(t_{p,i} -
 	 * y_{p,i}^{\lambda,L}\right)^2\f$.
@@ -167,7 +167,7 @@ public:
 	 *
 	 * Calculate all delta error signals in every layer and their neurons.
 	 * Every neuron must have a proper input/output signal assigned, and
-	 * the output_optimal training target result is used for calculation.
+	 * the test_output training target result is used for calculation.
 	 */
 	void backpropagate (void);
 
@@ -197,15 +197,15 @@ public:
 	 */
 	void setLearningParameter (double epsilon);
 
-	/** Getter for the optimal tolerance parameter.
+	/** Getter for the test tolerance parameter.
 	 */
-	double getOptimalTolerance (void) const;
+	double getTestTolerance (void) const;
 
-	/** Setter for the optimal tolerance parameter.
+	/** Setter for the test tolerance parameter.
 	 *
 	 * @param tolerance Value between 0.0 and 0.2.
 	 */
-	void setOptimalTolerance (double tolerance);
+	void setTestTolerance (double tolerance);
 
 	/** Getter for the weight decay parameter.
 	 */
@@ -228,10 +228,10 @@ public:
 	void setMomentumTermParameter (double factor);
 
 protected:
-	/** Optimal expected output vector, used for the learning process. For
+	/** Test expected output vector, used for the learning process. For
 	 * simple propagation it is not needed.
 	 */
-	vector<double>	output_optimal;
+	vector<double>	test_output;
 
 	/** Left-to-right list of layers within the network. Must be at least
 	 * two (one input and one output layer), but can be arbitrary large.
@@ -244,9 +244,9 @@ protected:
 	 */
 	double		epsilon;
 
-	/** Optimal tolerance parameter, should be between 0.0 and 0.2.
+	/** Test tolerance parameter, should be between 0.0 and 0.2.
 	 */
-	double		opt_tolerance;
+	double		test_tolerance;
 
 	/** Weight decay parameter, should be between 0.005 and 0.03.
 	 */

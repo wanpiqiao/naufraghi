@@ -13,7 +13,7 @@ using namespace std;
 
 
 PerceptronLayer::PerceptronLayer (unsigned int neuron_count,
-	const ActivationFunction *fact)
+								  const ActivationFunction *fact)
 {
 	this->fact = fact;
 	neurons = vector<PerceptronNeuron *> (neuron_count);
@@ -44,10 +44,11 @@ PerceptronLayer::PerceptronLayer (PerceptronLayer& source)
 
 void
 PerceptronLayer::randomizeParameters (PerceptronLayer *succ,
-	const RandomFunction *weight_func, const RandomFunction *theta_func)
+									  const RandomFunction *weight_func,
+				                      const RandomFunction *theta_func)
 {
 	unsigned int	n,
-			wn;
+					wn;
 
 	for (n = 0 ; n < neurons.size () ; ++n) {
 		/* initialize theta value accordingly
@@ -66,8 +67,7 @@ PerceptronLayer::randomizeParameters (PerceptronLayer *succ,
 		 * layer
 		 */
 		for (wn = 0 ; wn < succ->neurons.size () ; ++wn) {
-			neurons[n]->weight[wn] =
-				weight_func->func (weight_func->user);
+			neurons[n]->weight[wn] = weight_func->func (weight_func->user);
 		}
 	}
 }
@@ -113,8 +113,7 @@ PerceptronLayer::propagate (PerceptronLayer *pred)
 		 * layer
 		 */
 		for (unsigned int pn = 0 ; pn < pred->neurons.size () ; ++pn) {
-			input_sum += pred->neurons[pn]->weight[nidx] *
-				pred->neurons[pn]->output;
+			input_sum += pred->neurons[pn]->weight[nidx] * pred->neurons[pn]->output;
 		}
 
 		neurons[nidx]->input = input_sum;
@@ -123,41 +122,40 @@ PerceptronLayer::propagate (PerceptronLayer *pred)
 	/* now calculate the output of each neuron
 	 */
 	for (nidx = 0 ; nidx < neurons.size () ; ++nidx) {
-		neurons[nidx]->output = fact->normal (neurons[nidx]->input,
-			neurons[nidx]->getTheta ());
+		neurons[nidx]->output = fact->normal (neurons[nidx]->input, neurons[nidx]->getTheta ());
 	}
 }
 
 
 void
 PerceptronLayer::backpropagate (PerceptronLayer *succ,
-	vector<double>& output_optimal, double opt_tolerance)
+				                vector<double>& test_output,
+								double test_tolerance)
 {
 	unsigned int	nidx,
-			sn;
+					sn;
 	double		delta,
-			opt_diff;
+				test_diff;
 
 	for (nidx = 0 ; nidx < neurons.size () ; ++nidx) {
 		/* an output-layer neuron
 		 */
 		if (type == Output) {
-			delta = fact->derivate (neurons[nidx]->input,
-				neurons[nidx]->getTheta ());
+			delta = fact->derivate (neurons[nidx]->input, neurons[nidx]->getTheta ());
 
-			opt_diff = (output_optimal[nidx] - neurons[nidx]->output);
+			test_diff = (test_output[nidx] - neurons[nidx]->output);
 
 			/* when the difference is below the tolerance
 			 * treshhold, we just set it to zero.
 			 */
-			if (opt_tolerance != 0.0 &&
-				opt_diff >= (-1.0 * opt_tolerance) &&
-				opt_diff <= opt_tolerance)
+			if (test_tolerance != 0.0 &&
+				test_diff >= (-1.0 * test_tolerance) &&
+				test_diff <= test_tolerance)
 			{
-				opt_diff = 0.0;
+				test_diff = 0.0;
 			}
 
-			delta *= opt_diff;
+			delta *= test_diff;
 			delta *= -1.0;
 			neurons[nidx]->setDelta (delta);
 
@@ -170,11 +168,9 @@ PerceptronLayer::backpropagate (PerceptronLayer *succ,
 		 */
 		delta = 0.0;
 		for (sn = 0 ; sn < succ->neurons.size () ; ++sn) {
-			delta += neurons[nidx]->weight[sn] *
-				succ->neurons[sn]->getDelta ();
+			delta += neurons[nidx]->weight[sn] * succ->neurons[sn]->getDelta ();
 		}
-		delta *= fact->derivate (neurons[nidx]->input,
-			neurons[nidx]->getTheta ());
+		delta *= fact->derivate (neurons[nidx]->input, neurons[nidx]->getTheta ());
 
 		neurons[nidx]->setDelta (delta);
 	}
@@ -183,10 +179,10 @@ PerceptronLayer::backpropagate (PerceptronLayer *succ,
 
 void
 PerceptronLayer::postprocess (PerceptronLayer *succ, double epsilon,
-	double weight_decay, double momterm)
+				              double weight_decay, double momterm)
 {
 	unsigned int	n,
-			succ_n;
+					succ_n;
 
 	for (n = 0 ; n < neurons.size () ; ++n) {
 		neurons[n]->postprocessTheta (epsilon, weight_decay, momterm);
@@ -194,11 +190,9 @@ PerceptronLayer::postprocess (PerceptronLayer *succ, double epsilon,
 		/* for each successor neuron, postprocess the weighting
 		 * differences.
 		 */
-		for (succ_n = 0 ; succ != NULL &&
-			succ_n < succ->neurons.size () ; ++succ_n)
+		for (succ_n = 0 ; succ != NULL && succ_n < succ->neurons.size () ; ++succ_n)
 		{
-			neurons[n]->postprocessWeight (succ->neurons[succ_n],
-				epsilon, weight_decay, momterm);
+			neurons[n]->postprocessWeight (succ->neurons[succ_n], epsilon, weight_decay, momterm);
 		}
 	}
 }
