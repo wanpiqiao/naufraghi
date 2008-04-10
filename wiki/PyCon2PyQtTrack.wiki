@@ -13,7 +13,7 @@ L'intento è di presentare alcune delle caratteristiche vincenti del framework Q
  * Designer
  * QStyleSheet
  * QPainter
-
+ * Webkit
 
 = Organizzazione =
 
@@ -33,6 +33,7 @@ L'intento è di presentare alcune delle caratteristiche vincenti del framework Q
   * Gioco Sudoku
   * Stampa Sudoku
 
+ * Uso di webkit
  * Impacchettamento con !PyInstaller sviluppati per la presentazione.
 
 = Idee forse da integrare =
