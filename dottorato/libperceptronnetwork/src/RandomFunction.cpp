@@ -16,30 +16,30 @@
 void
 RandomFunctions::rand_init (void)
 {
-	struct timeb	tb;
+    struct timeb    tb;
 
-	ftime (&tb);
-	srandom (tb.millitm + tb.time);
-//	srandom (time (NULL));
+    ftime (&tb);
+    srandom (tb.millitm + tb.time);
+//  srandom (time (NULL));
 }
 
 
 const double
 RandomFunctions::rand_normal (RandomInterval *range)
 {
-	double	base;
+    double  base;
 
-	/* lose one bit precision here, too bad :-/
-	 */
-	base = random ();
-	if (base < 0.0)
-		base *= -1.0;
+    /* lose one bit precision here, too bad :-/
+     */
+    base = random ();
+    if (base < 0.0)
+        base *= -1.0;
 
-	base /= (double) INT_MAX;
-	base *= range->high - range->low;
-	base += range->low;
+    base /= (double) INT_MAX;
+    base *= range->high - range->low;
+    base += range->low;
 
-	return (base);
+    return (base);
 }
 
 
