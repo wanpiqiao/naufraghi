@@ -28,8 +28,7 @@ libtest:	libtest.cpp libperceptronnetwork.a
 	$(CPP) -o libtest libtest.cpp $(DFLAGS) $(CFLAGS) $(LIB_NN) -lm
 
 libtest-classify:	libtest-classify.cpp libperceptronnetwork.a
-	$(CPP) -o libtest-classify libtest-classify.cpp \
-		$(DFLAGS) $(CFLAGS) $(LIB_NN) -lm
+	$(CPP) -o libtest-classify libtest-classify.cpp $(DFLAGS) $(CFLAGS) $(LIB_NN) -lm
 
 %.o:	%.cpp
 	$(CPP) -c $(CPPFLAGS) -o $@ $<
