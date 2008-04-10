@@ -14,8 +14,7 @@ CPPFLAGS=$(CFLAGS)
 LIB_NN=-lperceptronnetwork -L.
 
 ### objects to be build
-OBJS=	ActivationFunction.o RandomFunction.o \
-	PerceptronNeuron.o PerceptronLayer.o PerceptronNetwork.o
+OBJS=	ActivationFunction.o RandomFunction.o PerceptronNeuron.o PerceptronLayer.o PerceptronNetwork.o
 LOBJS=	$(OBJS)
 
 ### targets
@@ -24,16 +23,16 @@ all:	libperceptronnetwork.a libtest libtest-classify
 libperceptronnetwork.a:	$(LOBJS)
 	ar rc libperceptronnetwork.a $(LOBJS)
 
-libtest:	libtest.cpp libperceptronnetwork.a
+libtest: libtest.cpp libperceptronnetwork.a
 	$(CPP) -o libtest libtest.cpp $(DFLAGS) $(CFLAGS) $(LIB_NN) -lm
 
-libtest-classify:	libtest-classify.cpp libperceptronnetwork.a
+libtest-classify: libtest-classify.cpp libperceptronnetwork.a
 	$(CPP) -o libtest-classify libtest-classify.cpp $(DFLAGS) $(CFLAGS) $(LIB_NN) -lm
 
-%.o:	%.cpp
+%.o: %.cpp
 	$(CPP) -c $(CPPFLAGS) -o $@ $<
 
-clean:	relclean
+clean: relclean
 	rm -f libperceptronnetwork.a libtest libtest-classify
 
 relclean:
