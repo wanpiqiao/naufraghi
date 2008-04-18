@@ -1,132 +1,164 @@
+#!/usr/bin/env python
+"""
+    Translator Demo
+
+    Run this file -- over regular Python! -- to analyse and type-annotate
+    the functions and class defined in this module, starting from the
+    entry point function demo().
+
+    Requires Pygame.
+"""
 # Back-Propagation Neural Networks
 # 
 # Written in Python.  See http://www.python.org/
-# Placed in the public domain.
-# Neil Schemenauer <nas@arctrix.com>
+#
+# Neil Schemenauer <nascheme@enme.ucalgary.ca>
+#
+# Modifications to the original (Armin Rigo):
+#   * import random from PyPy's lib, which is Python 2.2's plain
+#     Python implementation
+#   * starts the Translator instead of the demo by default.
 
+import sys
 import math
-import random
-import string
+import time
 
-random.seed(0)
+import autopath
+from pypy.rlib import rrandom
+
+PRINT_IT = False
+
+random = rrandom.Random(1)
 
 # calculate a random number where:  a <= rand < b
-rand = random.uniform
+def rand(a, b):
+    return (b-a)*random.random() + a
 
 # Make a matrix (we could use NumPy to speed this up)
-def makeMatrix(I, J, fill=0.0):
-    m = [[fill]*J for i in range(I)]
-    return m
+def _makeMatrix(rows, cols, fill=0.0):
+    matrix = []
+    for i in range(rows):
+        matrix.append([fill]*cols)
+    return matrix
 
-# our sigmoid function, tanh is a little nicer than the standard 1/(1+e^-x)
-sigmoid = math.tanh
+def makeMatrix(rows, cols, fill=0.0):
+    return [[fill]*cols for i in range(rows)]
 
-# derivative of our sigmoid function
-def dsigmoid(y):
-    return 1.0-y*y
+def randomizeMatrix(matrix):
+    for i in range(len(matrix)):
+        for j in range(len(matrix[0])):
+            matrix[i][j] = rand(-2.0, 2.0)
 
-class NN:
+def sigmoid(val):
+    return 1.0/(1.0+math.exp(-val))
+def sigmoid_deriv(val):
+    return val * (1.0 - val)
+sigmoid.deriv = sigmoid_deriv
+
+def dot(vec1, vec2):
+    _sum = 0.0
+    for i in range(len(vec1)):
+        _sum += vec1[i] * vec2[i]
+    return _sum
+    #return sum([x * w for (x, w) in zip(vec1, vec2)])
+
+class ShallowNetwork:
     def __init__(self, ni, nh, no):
         # number of input, hidden, and output nodes
-        self.ni = ni + 1 # +1 for bias node
-        self.nh = nh
-        self.no = no
+        self.n_in = ni + 1 # +1 for bias node
+        self.n_hid = nh
+        self.n_out = no
 
         # activations for nodes
-        self.ai = [1.0]*self.ni
-        self.ah = [1.0]*self.nh
-        self.ao = [1.0]*self.no
+        self.inputs = [1.0]*self.n_in
+        self.hiddens = [1.0]*self.n_hid
+        self.outputs = [1.0]*self.n_out
         
         # create weights
-        self.wi = makeMatrix(self.ni, self.nh)
-        self.wo = makeMatrix(self.nh, self.no)
-        # set them to random vaules
-        for i in range(self.ni):
-            for j in range(self.nh):
-                self.wi[i][j] = rand(-2.0, 2.0)
-        for j in range(self.nh):
-            for k in range(self.no):
-                self.wo[j][k] = rand(-2.0, 2.0)
+        self.weights_in = makeMatrix(self.n_in, self.n_hid)
+        self.weights_hid = makeMatrix(self.n_hid, self.n_out)
+        # set them to random values
+        randomizeMatrix(self.weights_in)
+        randomizeMatrix(self.weights_hid)
 
         # last change in weights for momentum   
-        self.ci = makeMatrix(self.ni, self.nh)
-        self.co = makeMatrix(self.nh, self.no)
+        #self.wchange_in = makeMatrix(self.n_in, self.n_hid)
+        #self.wchange_out = makeMatrix(self.n_hid, self.n_out)
 
-
-    def update(self, inputs):
-        if len(inputs) != self.ni-1:
+    def propagate(self, inputs):
+        if len(inputs) != self.n_in-1:
             raise ValueError, 'wrong number of inputs'
 
         # input activations
-        for i in range(self.ni-1):
-            #self.ai[i] = sigmoid(inputs[i])
-            self.ai[i] = inputs[i]
+        for i in range(self.n_in-1): # let bias out
+            #self.inputs[i] = 1.0/(1.0+math.exp(-inputs[i]))
+            self.inputs[i] = inputs[i]
 
         # hidden activations
-        for j in range(self.nh):
-            value = sum([self.ai[i] * self.wi[i][j] for i in range(self.ni)])
-            self.ah[j] = sigmoid(value)
+        for j in range(self.n_hid):
+            weights_j = [r[j] for r in self.weights_in]
+            self.hiddens[j] = sigmoid(dot(self.inputs, weights_j))
 
         # output activations
-        for k in range(self.no):
-            value = sum([self.ah[j] * self.wo[j][k] for j in range(self.nh)])
-            self.ao[k] = sigmoid(value)
+        for k in range(self.n_out):
+            weights_k = [r[k] for r in self.weights_hid]
+            self.outputs[k] = sigmoid(dot(self.hiddens, weights_k))
 
-        return self.ao[:]
-
+        return self.outputs[:]
 
     def backPropagate(self, targets, N, M):
-        if len(targets) != self.no:
+        if len(targets) != self.n_out:
             raise ValueError, 'wrong number of target values'
 
         # calculate error terms for output
-        output_deltas = [0.0] * self.no
-        for k in range(self.no):
-            error = targets[k]-self.ao[k]
-            output_deltas[k] = dsigmoid(self.ao[k]) * error
+        output_deltas = [0.0] * self.n_out
+        for k in range(self.n_out):
+            ao = self.outputs[k]
+            output_deltas[k] = sigmoid.deriv(ao)*(targets[k]-ao)
 
         # calculate error terms for hidden
-        hidden_deltas = [0.0] * self.nh
-        for j in range(self.nh):
-            error = sum([output_deltas[k]*self.wo[j][k] for k in range(self.no)])
-            hidden_deltas[j] = dsigmoid(self.ah[j]) * error
+        hidden_deltas = [0.0] * self.n_hid
+        for j in range(self.n_hid):
+            hidden_deltas[j] = sigmoid.deriv(self.hiddens[j]) * dot(output_deltas, self.weights_hid[j])
 
         # update output weights
-        for j in range(self.nh):
-            for k in range(self.no):
-                change = output_deltas[k]*self.ah[j]
-                self.wo[j][k] = self.wo[j][k] + N*change + M*self.co[j][k]
-                self.co[j][k] = change
-                #print N*change, M*self.co[j][k]
+        for j in range(self.n_hid):
+            for k in range(self.n_out):
+                change = output_deltas[k]*self.hiddens[j]
+                self.weights_hid[j][k] = self.weights_hid[j][k] + N*change# + M*self.wchange_out[j][k]
+                #self.wchange_out[j][k] = change
+                #print N*change, M*self.wchange_out[j][k]
 
         # update input weights
-        for i in range(self.ni):
-            for j in range(self.nh):
-                change = hidden_deltas[j]*self.ai[i]
-                self.wi[i][j] = self.wi[i][j] + N*change + M*self.ci[i][j]
-                self.ci[i][j] = change
+        for i in range(self.n_in):
+            for j in range(self.n_hid):
+                change = hidden_deltas[j]*self.inputs[i]
+                self.weights_in[i][j] = self.weights_in[i][j] + N*change# + M*self.wchange_in[i][j]
+                #self.wchange_in[i][j] = change
 
         # calculate error
-        error = sum([0.5*(targets[k]-self.ao[k])**2 for k in range(len(targets))])
+        error = 0.0
+        for k in range(len(targets)):
+            delta = targets[k]-self.outputs[k]
+            error += 0.5*delta**2
         return error
-
 
     def test(self, patterns):
         for p in patterns:
-            print p[0], '->', self.update(p[0])
-
+            if PRINT_IT:
+                print p[0], '->', self.propagate(p[0]), p[1]
 
     def weights(self):
-        print 'Input weights:'
-        for i in range(self.ni):
-            print self.wi[i]
-        print
-        print 'Output weights:'
-        for j in range(self.nh):
-            print self.wo[j]
+        if PRINT_IT:
+            print 'Input weights:'
+            for i in range(self.n_in):
+                print self.weights_in[i]
+            print
+            print 'Output weights:'
+            for j in range(self.n_hid):
+                print self.weights_hid[j]
 
-
-    def train(self, patterns, iterations=1000, N=0.5, M=0.1):
+    def train(self, patterns, iterations=2000, N=0.5, M=0.1):
         # N: learning rate
         # M: momentum factor
         for i in xrange(iterations):
@@ -134,10 +166,10 @@ class NN:
             for p in patterns:
                 inputs = p[0]
                 targets = p[1]
-                self.update(inputs)
+                self.propagate(inputs)
                 error = error + self.backPropagate(targets, N, M)
-            if i % 100 == 0:
-                print 'error %-14f' % error
+            if PRINT_IT and i % 100 == 0:
+                print 'error %f' % error
 
 
 def demo():
@@ -149,14 +181,46 @@ def demo():
         [[1,1], [0]]
     ]
 
-    # create a network with two input, two hidden, and one output nodes
-    n = NN(2, 2, 1)
+    # create a network with two input, four hidden, and one output nodes
+    n = ShallowNetwork(2, 4, 1)
     # train it with some patterns
-    n.train(pat)
+    n.train(pat, 2000)
     # test it
     n.test(pat)
 
 
 
 if __name__ == '__main__':
+    PRINT_IT = True
     demo()
+    PRINT_IT = False
+    sys.exit(0)
+    
+    print 'Loading...'
+    from pypy.translator.interactive import Translation
+    t = Translation(demo)
+    
+    print 'Annotating...'
+    t.annotate([])
+    t.viewcg()
+
+    print 'Specializing...'
+    t.rtype()   # enable this to see (some) lower-level Cish operations
+    
+    print 'Compiling...'
+    f = t.compile_c()
+
+    print 'Running...'
+    T = time.time()
+    for i in range(10):
+        f()
+    t1 = time.time() - T
+    print "that took", t1
+
+    T = time.time()
+    for i in range(10):
+        demo()
+    t2 = time.time() - T
+    print "compared to", t2
+    print "a speed-up of", t2/t1
+    
