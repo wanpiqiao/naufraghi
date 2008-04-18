@@ -56,6 +56,18 @@ def dot(vec1, vec2):
     return _sum
     #return sum([x * w for (x, w) in zip(vec1, vec2)])
 
+def propagate(inputs, weights, outputs, n_out=None):
+    """
+    Feed Forward propagation
+    IN: inputs, weights, n_out
+    IN-OUT: output (modified inplace)
+    """
+    if not n_out:
+        n_out = len(outputs)
+    for j in range(n_out):
+        _weights = [r[j] for r in weights]
+        outputs[j] = sigmoid(dot(inputs, _weights))
+
 class ShallowNetwork:
     def __init__(self, ni, nh, no):
         # number of input, hidden, and output nodes
@@ -88,22 +100,11 @@ class ShallowNetwork:
             #self.inputs[i] = 1.0/(1.0+math.exp(-inputs[i]))
             self.inputs[i] = inputs[i]
 
-        def _propagate(n_out, inputs, weights, outputs):
-            for j in range(n_out):
-                _weights = [r[j] for r in weights]
-                outputs[j] = sigmoid(dot(inputs, _weights))
-
         # hidden activations
-        _propagate(self.n_hid, self.inputs, self.weights_in, self.hiddens)
-        #for j in range(self.n_hid):
-        #    weights_j = [r[j] for r in self.weights_in]
-        #    self.hiddens[j] = sigmoid(dot(self.inputs, weights_j))
+        propagate(self.inputs, self.weights_in, self.hiddens, self.n_hid)
 
         # output activations
-        _propagate(self.n_out, self.hiddens, self.weights_hid, self.outputs)
-        #for k in range(self.n_out):
-        #    weights_k = [r[k] for r in self.weights_hid]
-        #    self.outputs[k] = sigmoid(dot(self.hiddens, weights_k))
+        propagate(self.hiddens, self.weights_hid, self.outputs, self.n_out)
 
         return self.outputs[:]
 
@@ -195,7 +196,7 @@ if __name__ == '__main__':
     PRINT_IT = True
     demo()
     PRINT_IT = False
-    sys.exit(0)
+    #sys.exit(0)
     
     print 'Loading...'
     from pypy.translator.interactive import Translation
