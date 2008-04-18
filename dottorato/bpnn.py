@@ -35,12 +35,6 @@ def rand(a, b):
     return (b-a)*random.random() + a
 
 # Make a matrix (we could use NumPy to speed this up)
-def _makeMatrix(rows, cols, fill=0.0):
-    matrix = []
-    for i in range(rows):
-        matrix.append([fill]*cols)
-    return matrix
-
 def makeMatrix(rows, cols, fill=0.0):
     return [[fill]*cols for i in range(rows)]
 
@@ -82,8 +76,8 @@ class ShallowNetwork:
         randomizeMatrix(self.weights_hid)
 
         # last change in weights for momentum   
-        #self.wchange_in = makeMatrix(self.n_in, self.n_hid)
-        #self.wchange_out = makeMatrix(self.n_hid, self.n_out)
+        self.wchange_in = makeMatrix(self.n_in, self.n_hid)
+        self.wchange_out = makeMatrix(self.n_hid, self.n_out)
 
     def propagate(self, inputs):
         if len(inputs) != self.n_in-1:
@@ -94,15 +88,22 @@ class ShallowNetwork:
             #self.inputs[i] = 1.0/(1.0+math.exp(-inputs[i]))
             self.inputs[i] = inputs[i]
 
+        def _propagate(n_out, inputs, weights, outputs):
+            for j in range(n_out):
+                _weights = [r[j] for r in weights]
+                outputs[j] = sigmoid(dot(inputs, _weights))
+
         # hidden activations
-        for j in range(self.n_hid):
-            weights_j = [r[j] for r in self.weights_in]
-            self.hiddens[j] = sigmoid(dot(self.inputs, weights_j))
+        _propagate(self.n_hid, self.inputs, self.weights_in, self.hiddens)
+        #for j in range(self.n_hid):
+        #    weights_j = [r[j] for r in self.weights_in]
+        #    self.hiddens[j] = sigmoid(dot(self.inputs, weights_j))
 
         # output activations
-        for k in range(self.n_out):
-            weights_k = [r[k] for r in self.weights_hid]
-            self.outputs[k] = sigmoid(dot(self.hiddens, weights_k))
+        _propagate(self.n_out, self.hiddens, self.weights_hid, self.outputs)
+        #for k in range(self.n_out):
+        #    weights_k = [r[k] for r in self.weights_hid]
+        #    self.outputs[k] = sigmoid(dot(self.hiddens, weights_k))
 
         return self.outputs[:]
 
@@ -125,22 +126,22 @@ class ShallowNetwork:
         for j in range(self.n_hid):
             for k in range(self.n_out):
                 change = output_deltas[k]*self.hiddens[j]
-                self.weights_hid[j][k] = self.weights_hid[j][k] + N*change# + M*self.wchange_out[j][k]
-                #self.wchange_out[j][k] = change
+                self.weights_hid[j][k] = self.weights_hid[j][k] + N*change + M*self.wchange_out[j][k]
+                self.wchange_out[j][k] = change
                 #print N*change, M*self.wchange_out[j][k]
 
         # update input weights
         for i in range(self.n_in):
             for j in range(self.n_hid):
                 change = hidden_deltas[j]*self.inputs[i]
-                self.weights_in[i][j] = self.weights_in[i][j] + N*change# + M*self.wchange_in[i][j]
-                #self.wchange_in[i][j] = change
+                self.weights_in[i][j] = self.weights_in[i][j] + N*change + M*self.wchange_in[i][j]
+                self.wchange_in[i][j] = change
 
         # calculate error
         error = 0.0
         for k in range(len(targets)):
             delta = targets[k]-self.outputs[k]
-            error += 0.5*delta**2
+            error += 0.5*delta*delta # delta**2 is not supported
         return error
 
     def test(self, patterns):
