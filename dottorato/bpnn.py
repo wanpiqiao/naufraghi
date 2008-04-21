@@ -127,7 +127,7 @@ class ShallowNetwork:
         for j in range(self.n_hid):
             for k in range(self.n_out):
                 change = output_deltas[k]*self.hiddens[j]
-                self.weights_hid[j][k] = self.weights_hid[j][k] + N*change + M*self.wchange_out[j][k]
+                self.weights_hid[j][k] += N*change + M*self.wchange_out[j][k]
                 self.wchange_out[j][k] = change
                 #print N*change, M*self.wchange_out[j][k]
 
@@ -135,7 +135,7 @@ class ShallowNetwork:
         for i in range(self.n_in):
             for j in range(self.n_hid):
                 change = hidden_deltas[j]*self.inputs[i]
-                self.weights_in[i][j] = self.weights_in[i][j] + N*change + M*self.wchange_in[i][j]
+                self.weights_in[i][j] += N*change + M*self.wchange_in[i][j]
                 self.wchange_in[i][j] = change
 
         # calculate error
