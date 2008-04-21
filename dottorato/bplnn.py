@@ -4,6 +4,7 @@
 
 import sys
 import math
+import time
 import random
 import traceback
 
@@ -223,6 +224,8 @@ if __name__ == "__main__":
         import doctest
         doctest.testmod()
     try:
+        start_time = time.time()
         demo()
+        print "Time:", (time.time() - start_time)
     except:
         print_exc_plus()
