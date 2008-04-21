@@ -55,6 +55,11 @@ def rand(a, b):
     return (b-a)*random.random() + a
 
 def dot(vec1, vec2):
+    """
+    Vector dot product
+    >>> dot([2,2,2], [1,2,3])
+    12
+    """
     return sum([x * w for (x, w) in zip(vec1, vec2)])
 
 def _vec(func):
@@ -77,7 +82,7 @@ def _map(func):
     return __map
 
 def sigmoid(val):
-    return 1.0 * (1.0 + math.exp(-val))
+    return 1.0 / (1.0 + math.exp(-val))
 def sigmoid_deriv(val):
     return val * (1.0 - val)
 sigmoid.deriv = sigmoid_deriv
@@ -87,7 +92,7 @@ sigmoid.deriv.vec = _vec(sigmoid_deriv)
 sigmoid.deriv.map = _map(sigmoid_deriv)
 
 def qloss(output, target):
-    return sigmoid.deriv(output) * (output - target)
+    return sigmoid.deriv(output) * (target - output)
 qloss.vec = _vec(qloss)
 
 def diff(a, b):
@@ -106,65 +111,77 @@ def makeMatrix(rows, cols, fill=0.0):
     """
     def _fill():
         return callable(fill) and fill() or fill
-    matrix = []
-    for i in range(rows):
-        matrix.append([_fill() for j in range(cols)])
-    return matrix
+    return [[_fill() for j in range(cols)] for i in range(rows)]
 
+def transposed(matrix):
+    return zip(*matrix)
 
 class Layer:
-    def __init__(self, n_in, n_out):
+    def __init__(self, n_in, n_out, squash=sigmoid):
         def _rand():
             return rand(-2.0, 2.0)
         self.n_in = n_in
         self.n_out = n_out
+        self.squash = squash
         self.inputs = [1.0]*n_in
-        self.outputs = [1.0]*n_out # sigmoid(activations)
+        self.outputs = [1.0]*n_out # squash(activations)
         self.weights = makeMatrix(n_out, n_in, _rand)
         self.delta_inputs = [0.0]*self.n_in
         self.delta_outputs = [0.0]*self.n_out
+        self.next = None
+        self.prev = None
     def propagate(self, inputs=None):
         if inputs != None:
             if __debug__: assertEqual(len(inputs), self.n_in)
-            self.inputs = inputs
-        if __debug__: print "propagate(%s): outputs = %s ->" % (self.inputs, self.outputs),
+            if self.prev == None:
+                self.inputs = inputs
+            else:
+                raise ValueError("Inputs are not allowed in the middle of a chain!!")
+        #if __debug__: print "propagate(%s): outputs = %s ->" % (self.inputs, self.outputs),
         for k in range(self.n_out):
-            self.outputs[k] = sigmoid(dot(self.weights[k], self.inputs))
-        if __debug__: print "%s" % self.outputs
+            self.outputs[k] = self.squash(dot(self.weights[k], self.inputs))
+            if self.next != None:
+                self.next.inputs[k] = self.outputs[k]
+        #if __debug__: print "%s" % self.outputs
     def backPropagate(self, targets=None):
         if targets != None:
             if __debug__: assertEqual(len(targets), self.n_out)
-            self.delta_outputs = diff.vec(self.outputs, targets)
-        _weights = zip(*self.weights)
-        if __debug__: print "backPropagate(%s): delta_inputs = %s ->" % (self.delta_outputs, self.delta_inputs),
-        for j in range(1, self.n_in):
-            self.delta_inputs[j] = sigmoid.deriv(self.inputs[j]) * dot(_weights[j], self.delta_outputs)
-        if __debug__: print "%s" % self.delta_inputs
+            if self.next == None:
+                self.delta_outputs = qloss.vec(self.outputs, targets)
+            else:
+                raise ValueError("Targets are not allowed in the middle of a chain!!")
+        _weights = transposed(self.weights)
+        #if __debug__: print "backPropagate(%s): delta_inputs = %s ->" % (self.delta_outputs, self.delta_inputs),
+        for j in range(self.n_in):
+            self.delta_inputs[j] = self.squash.deriv(self.inputs[j]) * dot(_weights[j], self.delta_outputs)
+            if self.prev != None:
+                self.prev.delta_outputs[j] = self.delta_inputs[j]
+        #if __debug__: print "%s" % self.delta_inputs
     def updateWeights(self, learn):
         # locals for performance or traceback
         # weights, deltas, inputs = self.weights, self.delta_inputs, self.inputs
         for j in range(self.n_in):
             for k in range(self.n_out):
-                self.weights[k][j] -= learn * self.delta_outputs[k] * self.inputs[j]
-
+                self.weights[k][j] += learn * self.delta_outputs[k] * self.inputs[j]
+    def connect(self, other):
+        if __debug__: assertEqual(len(self.outputs), len(other.inputs))
+        self.next = other
+        other.prev = self
 
 class ShallowNetwork:
     def __init__(self, n_in, n_hid, n_out):
         n_in = n_in + 1 # bias
         self.in_layer = Layer(n_in, n_hid)
         self.out_layer = Layer(n_hid, n_out)
-        self.in_layer.outputs = self.out_layer.inputs
-        self.in_layer.delta_outputs = self.out_layer.delta_inputs
+        self.in_layer.connect(self.out_layer)
     def _propagate(self, inputs):
         self.in_layer.propagate(inputs + [1.0])
         self.out_layer.propagate()
-    def _updateWeights(self, learn):
-        self.in_layer.updateWeights(learn)
-        self.out_layer.updateWeights(learn)
     def _backPropagate(self, targets, learn):
         self.out_layer.backPropagate(targets)
         self.in_layer.backPropagate()
-        self._updateWeights(learn)
+        self.in_layer.updateWeights(learn)
+        self.out_layer.updateWeights(learn)
     def train(self, patterns, iterations=1000, learn=0.05):
         def sq2(x):
             return 0.5 * x**2
@@ -173,9 +190,10 @@ class ShallowNetwork:
             for inputs, targets in patterns:
                 self._propagate(inputs)
                 self._backPropagate(targets, learn)
-                error += sum(map(sq2, self.out_layer.delta_outputs))
+                error += sum(map(sq2, diff.vec(self.out_layer.outputs, targets)))
             if __debug__:
-                print "iter(%s) error = %f" % (i, error)
+                if not i % 100:
+                    print "iter(%s) error = %f" % (i, error)
     def test(self, patterns):
         for inputs, targets in patterns:
             self._propagate(inputs)
@@ -193,9 +211,9 @@ def demo():
     ]
 
     # create a network with two input, two hidden, and two output nodes
-    net = ShallowNetwork(2, 4, 1)
+    net = ShallowNetwork(2, 5, 1)
     # train it with some patterns
-    net.train(patterns, 100)
+    net.train(patterns, 10000)
     # test it
     net.test(patterns)
     
