@@ -141,8 +141,6 @@ class Layer:
         #if __debug__: print "propagate(%s): outputs = %s ->" % (self.inputs, self.outputs),
         for k in range(self.n_out):
             self.outputs[k] = self.squash(dot(self.weights[k], self.inputs))
-            #if self.next != None:
-            #    self.next.inputs[k] = self.outputs[k]
         #if __debug__: print "%s" % self.outputs
     def backPropagate(self, targets=None):
         if targets != None:
@@ -155,8 +153,6 @@ class Layer:
         #if __debug__: print "backPropagate(%s): delta_inputs = %s ->" % (self.delta_outputs, self.delta_inputs),
         for j in range(self.n_in):
             self.delta_inputs[j] = self.squash.deriv(self.inputs[j]) * dot(_weights[j], self.delta_outputs)
-            #if self.prev != None:
-            #    self.prev.delta_outputs[j] = self.delta_inputs[j]
         #if __debug__: print "%s" % self.delta_inputs
     def updateWeights(self, learn):
         # locals for performance or traceback
@@ -164,12 +160,12 @@ class Layer:
         for j in range(self.n_in):
             for k in range(self.n_out):
                 self.weights[k][j] += learn * self.delta_outputs[k] * self.inputs[j]
-    def connect(self, other):
-        if __debug__: assertEqual(len(self.outputs), len(other.inputs))
-        self.next = other
-        other.prev = self
-        other.inputs = self.outputs
-        other.delta_inputs = self.delta_outputs
+    def connect(self, next):
+        if __debug__: assertEqual(len(self.outputs), len(next.inputs))
+        self.next = next
+        next.prev = self
+        next.inputs = self.outputs
+        next.delta_inputs = self.delta_outputs
 
 class ShallowNetwork:
     def __init__(self, n_in, n_hid, n_out):
