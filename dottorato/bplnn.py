@@ -36,7 +36,7 @@ def print_exc_plus():
             #We have to be careful not to cause a new error in our error
             #printer! Calling str() on an unknown object could cause an
             #error we don't want.
-            try:                   
+            try:
                 print value
             except:
                 print "<ERROR WHILE PRINTING VALUE>"
@@ -215,8 +215,8 @@ def demo():
     net.train(patterns, 10000)
     # test it
     net.test(patterns)
-    
-    
+
+
 if __name__ == "__main__":
     if __debug__:
         import doctest
