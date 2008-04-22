@@ -42,6 +42,13 @@ def print_exc_plus():
                 print "<ERROR WHILE PRINTING VALUE>"
 
 
+def trace(s, sep='-'):
+    s = (" %s " % s).center(70, sep)
+    print sep*len(s)
+    print s
+    print sep*len(s)
+
+
 def assertEqual(a, b, message=None):
     """
     Verbose assertEqual
@@ -115,6 +122,11 @@ def makeMatrix(rows, cols, fill=0.0):
     return [[_fill() for j in range(cols)] for i in range(rows)]
 
 def transposed(matrix):
+    """
+    Returns the transposed `matrix`
+    >>> transposed([[1,2,3], [4,5,6]])
+    [(1, 4), (2, 5), (3, 6)]
+    """
     return zip(*matrix)
 
 class Layer:
@@ -166,15 +178,31 @@ class Layer:
         next.prev = self
         next.inputs = self.outputs
         next.delta_inputs = self.delta_outputs
+    def graphviz(self):
+        res = ["digraph Layer {", "rankdir = LR;"]
+        res += [" subgraph Layer_in {"] + [" " + " ".join(["I%s" % i for i in range(len(self.inputs))]) + ";"] + [" }"]
+        res += [" subgraph Layer_out {"] + [" " + " ".join(["O%s" % j for j in range(len(self.outputs))]) + ";"] + [" }"]
+        for i, input in enumerate(self.inputs):
+            for j, output in enumerate(self.outputs):
+                _w = "%s -> %s [label = %f];" % ("I%s" % i, "O%s" % j, self.weights[j][i])
+                res.append(_w)
+        return "\n".join(res + ["}"])
+    def __str__(self):
+        return "<Layer(%s, %s, %s)>" % (self.n_in, self.n_out, self.squash)
+
 
 class ShallowNetwork:
-    def __init__(self, n_in, n_hid, n_out):
-        n_in = n_in + 1 # bias
+    def __init__(self, n_in, n_hid, n_out, bias=True):
+        if bias:
+            self.bias = [1.0]
+        else:
+            self.bias = []
+        n_in = n_in + len(self.bias)
         self.in_layer = Layer(n_in, n_hid)
         self.out_layer = Layer(n_hid, n_out)
         self.in_layer.connect(self.out_layer)
     def _propagate(self, inputs):
-        self.in_layer.propagate(inputs + [1.0])
+        self.in_layer.propagate(inputs + self.bias)
         self.out_layer.propagate()
     def _backPropagate(self, targets, learn):
         self.out_layer.backPropagate(targets)
@@ -202,6 +230,79 @@ class ShallowNetwork:
             print inputs, "->", res, "(%s)" % targets
 
 
+class DeepNetwork:
+    def __init__(self, n_nodes, auto_mode="step"):
+        n_nodes[0] += 1 # bias
+        self.layers = [Layer(n_in, n_out) for n_in, n_out in zip(n_nodes[:-1], n_nodes[1:])]
+        self.auto_mode = "step"
+    def _connect(self):
+        for i in range(len(self.layers)-1):
+            self.layers[i].connect(self.layers[i+1])
+    def _propagate(self, inputs):
+        self.layers[0].propagate(inputs)
+        for layer in self.layers[1:]:
+            layer.propagate()
+    def _backPropagate(self, targets, learn):
+        self.layers[-1].backPropagate(targets)
+        for layer in reversed(self.layers[:-1]):
+            layer.backPropagate()
+        for layer in self.layers:
+            layer.updateWeights(learn)
+    def _prepare(self, patterns, iterations, learn):
+        auto_patterns = [(inputs + [1.0], inputs + [1.0]) for inputs, targets in patterns]
+        if __debug__:
+            trace("_prepare")
+        for layer in self.layers:
+            if __debug__:
+                print "Layer", self.layers.index(layer), layer
+            if self.auto_mode == "step":
+                auto_net = ShallowNetwork(len(layer.inputs), len(layer.outputs), len(layer.inputs), bias=False)
+            else:
+                auto_net = ShallowNetwork(len(layer.inputs), len(layer.outputs), len(self.layers[0].inputs), bias=False)
+            auto_net.train(auto_patterns, iterations, learn)
+            layer.weights = auto_net.in_layer.weights
+            new_auto_patterns = []
+            for inputs, targets in auto_patterns:
+                auto_net._propagate(inputs)
+                new_inputs = auto_net.out_layer.inputs
+                if self.auto_mode == "step":
+                    new_auto_patterns.append((new_inputs, new_inputs))
+                else:
+                    new_auto_patterns.append((new_inputs, inputs))
+            auto_patterns = new_auto_patterns
+        self._connect()
+    def train(self, patterns, iterations=1000, learn=0.05):
+        self._prepare(patterns, iterations/10, learn)
+        if __debug__:
+            trace("train")
+        def sq2(x):
+            return 0.5 * x**2
+        count = iterations
+        while count:
+            count -= 1
+            error = 0.0
+            for inputs, targets in patterns:
+                self._propagate(inputs + [1.0])
+                self._backPropagate(targets, learn)
+                error += sum(map(sq2, diff.vec(self.layers[-1].outputs, targets)))
+            if __debug__:
+                if not count % 100:
+                    print "iter(%s) error = %f, delta = %f" % (count, error, abs(error - last_error) * 100)
+            if count != iterations-1:
+                if error < learn:
+                    break
+                if abs(error - last_error) > learn/iterations:
+                    count += 10
+            last_error = error
+    def test(self, patterns):
+        for inputs, targets in patterns:
+            self._propagate(inputs + [1.0])
+            res = self.layers[-1].outputs
+            print inputs, "->", res, "(%s)" % targets
+    def __str__(self):
+        return str(map(str, self.layers))
+
+
 def demo():
     # Teach network XOR function
     patterns = [
@@ -211,11 +312,13 @@ def demo():
         [[1,1], [0]]
     ]
 
-    # create a network with two input, two hidden, and two output nodes
-    net = ShallowNetwork(2, 5, 1)
+    # create a network
+    #net = ShallowNetwork(2, 5, 1)
+    net = DeepNetwork([2, 3, 3, 3, 3, 1], ["step", "input"][0])
     # train it with some patterns
     net.train(patterns, 10000)
     # test it
+    print net
     net.test(patterns)
 
 
