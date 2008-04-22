@@ -2,7 +2,7 @@
 # -*- encoding: utf-8 -*-
 # Copyright (C) 2008 Matteo Bertini
 
-import sy
+import sys
 import math
 import time
 import random
@@ -36,7 +36,7 @@ def print_exc_plus():
             #We have to be careful not to cause a new error in our error
             #printer! Calling str() on an unknown object could cause an
             #error we don't want.
-            try:            
+            try:                   
                 print value
             except:
                 print "<ERROR WHILE PRINTING VALUE>"
@@ -107,7 +107,7 @@ def makeMatrix(rows, cols, fill=0.0):
     >>> import random
     >>> random.seed(0)
     >>> makeMatrix(2, 3, random.random)
-    [[0.84442185152504812, 0.75795440294030247, 0.420571580830845],
+    [[0.84442185152504812, 0.75795440294030247, 0.420571580830845],\
  [0.25891675029296335, 0.51127472136860852, 0.40493413745041429]]
     """
     def _fill():
@@ -135,13 +135,13 @@ class Layer:
         if inputs != None:
             if __debug__: assertEqual(len(inputs), self.n_in)
             if self.prev == None:
-                self.inputs = input
+                self.inputs = inputs
             else:
                 raise ValueError("Inputs are not allowed in the middle of a chain!!")
         #if __debug__: print "propagate(%s): outputs = %s ->" % (self.inputs, self.outputs),
         for k in range(self.n_out):
             self.outputs[k] = self.squash(dot(self.weights[k], self.inputs))
-        #if __debug__: print "%s" % self.output
+        #if __debug__: print "%s" % self.outputs
     def backPropagate(self, targets=None):
         if targets != None:
             if __debug__: assertEqual(len(targets), self.n_out)
@@ -153,10 +153,10 @@ class Layer:
         #if __debug__: print "backPropagate(%s): delta_inputs = %s ->" % (self.delta_outputs, self.delta_inputs),
         for j in range(self.n_in):
             self.delta_inputs[j] = self.squash.deriv(self.inputs[j]) * dot(_weights[j], self.delta_outputs)
-        #if __debug__: print "%s" % self.delta_input
+        #if __debug__: print "%s" % self.delta_inputs
     def updateWeights(self, learn):
         # locals for performance or traceback
-        # weights, deltas, inputs = self.weights, self.delta_inputs, self.input
+        # weights, deltas, inputs = self.weights, self.delta_inputs, self.inputs
         for j in range(self.n_in):
             for k in range(self.n_out):
                 self.weights[k][j] += learn * self.delta_outputs[k] * self.inputs[j]
@@ -164,12 +164,12 @@ class Layer:
         if __debug__: assertEqual(len(self.outputs), len(next.inputs))
         self.next = next
         next.prev = self
-        next.inputs = self.output
-        next.delta_inputs = self.delta_output
+        next.inputs = self.outputs
+        next.delta_inputs = self.delta_outputs
 
 class ShallowNetwork:
     def __init__(self, n_in, n_hid, n_out):
-        n_in = n_in + 1 # bia
+        n_in = n_in + 1 # bias
         self.in_layer = Layer(n_in, n_hid)
         self.out_layer = Layer(n_hid, n_out)
         self.in_layer.connect(self.out_layer)
@@ -193,13 +193,11 @@ class ShallowNetwork:
             if __debug__:
                 if not i % 100:
                     print "iter(%s) error = %f" % (i, error)
-            if error < learn:
-                break
     def test(self, patterns):
         for inputs, targets in patterns:
             self._propagate(inputs)
-            res = self.out_layer.output
-            print inputs, "->", res, "(%s)" % target
+            res = self.out_layer.outputs
+            print inputs, "->", res, "(%s)" % targets
 
 
 def demo():
@@ -211,14 +209,14 @@ def demo():
         [[1,1], [0]]
     ]
 
-    # create a network with two input, two hidden, and two output node
+    # create a network with two input, two hidden, and two output nodes
     net = ShallowNetwork(2, 5, 1)
-    # train it with some pattern
+    # train it with some patterns
     net.train(patterns, 10000)
     # test it
     net.test(patterns)
-
-
+    
+    
 if __name__ == "__main__":
     if __debug__:
         import doctest
