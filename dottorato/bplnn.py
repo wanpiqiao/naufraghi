@@ -6,13 +6,13 @@ import sys
 import math
 import time
 import random
-import traceback
 
 def print_exc_plus():
     """
     Print the usual traceback information, followed by a listing of all the
     local variables in each frame.
     """
+    import traceback
     tb = sys.exc_info()[2]
     while 1:
         if not tb.tb_next:
@@ -86,9 +86,9 @@ def sigmoid(val):
     return 1.0 / (1.0 + math.exp(-val))
 def sigmoid_deriv(val):
     return val * (1.0 - val)
-sigmoid.deriv = sigmoid_deriv
 sigmoid.vec = _vec(sigmoid)
 sigmoid.map = _map(sigmoid)
+sigmoid.deriv = sigmoid_deriv
 sigmoid.deriv.vec = _vec(sigmoid_deriv)
 sigmoid.deriv.map = _map(sigmoid_deriv)
 
