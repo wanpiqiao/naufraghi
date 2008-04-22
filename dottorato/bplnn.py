@@ -193,6 +193,8 @@ class ShallowNetwork:
             if __debug__:
                 if not i % 100:
                     print "iter(%s) error = %f" % (i, error)
+            if error < learn:
+                break
     def test(self, patterns):
         for inputs, targets in patterns:
             self._propagate(inputs)
@@ -227,3 +229,4 @@ if __name__ == "__main__":
         print "Time:", (time.time() - start_time)
     except:
         print_exc_plus()
+
