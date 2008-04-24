@@ -1,0 +1,146 @@
+----------------------------------------------------------------------
+------------------------------ _prepare ------------------------------
+----------------------------------------------------------------------
+Layer 0 <Layer(3, 3, <function sigmoid at 0xb7dd210c>)>
+iter(0) error = 1.339884
+iter(100) error = 1.016878
+iter(200) error = 0.865183
+iter(300) error = 0.738928
+iter(400) error = 0.615201
+iter(500) error = 0.500483
+iter(600) error = 0.402911
+iter(700) error = 0.324673
+iter(800) error = 0.263717
+iter(900) error = 0.216704
+Layer 1 <Layer(3, 3, <function sigmoid at 0xb7dd210c>)>
+iter(0) error = 1.648624
+iter(100) error = 0.673010
+iter(200) error = 0.246622
+iter(300) error = 0.075159
+Layer 2 <Layer(3, 3, <function sigmoid at 0xb7dd210c>)>
+iter(0) error = 1.003767
+iter(100) error = 0.138682
+iter(200) error = 0.064423
+Layer 3 <Layer(3, 3, <function sigmoid at 0xb7dd210c>)>
+iter(0) error = 0.020905
+Layer 4 <Layer(3, 1, <function sigmoid at 0xb7dd210c>)>
+iter(0) error = 0.323055
+iter(100) error = 0.263736
+iter(200) error = 0.177756
+iter(300) error = 0.087331
+----------------------------------------------------------------------
+------------------------------- train --------------------------------
+----------------------------------------------------------------------
+iter(9900) error = 0.500610, delta = 0.000050
+iter(9800) error = 0.500570, delta = 0.000036
+iter(9700) error = 0.500535, delta = 0.000035
+iter(9600) error = 0.500499, delta = 0.000036
+iter(9500) error = 0.500463, delta = 0.000037
+iter(9400) error = 0.500426, delta = 0.000038
+iter(9300) error = 0.500387, delta = 0.000039
+iter(9200) error = 0.500348, delta = 0.000040
+iter(9100) error = 0.500307, delta = 0.000041
+iter(9000) error = 0.500265, delta = 0.000043
+iter(8900) error = 0.500222, delta = 0.000044
+iter(8800) error = 0.500177, delta = 0.000045
+iter(8700) error = 0.500131, delta = 0.000047
+iter(8600) error = 0.500084, delta = 0.000048
+iter(8500) error = 0.500035, delta = 0.000050
+iter(8400) error = 0.499984, delta = 0.000051
+iter(8300) error = 0.499932, delta = 0.000053
+iter(8200) error = 0.499878, delta = 0.000055
+iter(8100) error = 0.499822, delta = 0.000057
+iter(8000) error = 0.499765, delta = 0.000059
+iter(7900) error = 0.499705, delta = 0.000061
+iter(7800) error = 0.499643, delta = 0.000063
+iter(7700) error = 0.499579, delta = 0.000065
+iter(7600) error = 0.499513, delta = 0.000068
+iter(7500) error = 0.499444, delta = 0.000070
+iter(7400) error = 0.499372, delta = 0.000073
+iter(7300) error = 0.499299, delta = 0.000075
+iter(7200) error = 0.499222, delta = 0.000078
+iter(7100) error = 0.499142, delta = 0.000081
+iter(7000) error = 0.499059, delta = 0.000084
+iter(6900) error = 0.498973, delta = 0.000088
+iter(6800) error = 0.498884, delta = 0.000091
+iter(6700) error = 0.498791, delta = 0.000095
+iter(6600) error = 0.498694, delta = 0.000099
+iter(6500) error = 0.498593, delta = 0.000103
+iter(6400) error = 0.498488, delta = 0.000107
+iter(6300) error = 0.498379, delta = 0.000112
+iter(6200) error = 0.498264, delta = 0.000117
+iter(6100) error = 0.498145, delta = 0.000122
+iter(6000) error = 0.498021, delta = 0.000127
+iter(5900) error = 0.497891, delta = 0.000133
+iter(5800) error = 0.497755, delta = 0.000139
+iter(5700) error = 0.497613, delta = 0.000146
+iter(5600) error = 0.497464, delta = 0.000152
+iter(5500) error = 0.497307, delta = 0.000160
+iter(5400) error = 0.497144, delta = 0.000168
+iter(5300) error = 0.496972, delta = 0.000176
+iter(5200) error = 0.496791, delta = 0.000185
+iter(5100) error = 0.496602, delta = 0.000194
+iter(5000) error = 0.496402, delta = 0.000205
+iter(4900) error = 0.496192, delta = 0.000216
+iter(4800) error = 0.495970, delta = 0.000227
+iter(4700) error = 0.495737, delta = 0.000240
+iter(4600) error = 0.495490, delta = 0.000254
+iter(4500) error = 0.495228, delta = 0.000269
+iter(4400) error = 0.494952, delta = 0.000284
+iter(4300) error = 0.494659, delta = 0.000302
+iter(4200) error = 0.494348, delta = 0.000320
+iter(4100) error = 0.494017, delta = 0.000341
+iter(4000) error = 0.493666, delta = 0.000363
+iter(3900) error = 0.493291, delta = 0.000387
+iter(3800) error = 0.492891, delta = 0.000413
+iter(3700) error = 0.492463, delta = 0.000442
+iter(3600) error = 0.492005, delta = 0.000474
+iter(4100) error = 0.491307, delta = 0.000524
+iter(5000) error = 0.490764, delta = 0.000564
+iter(5900) error = 0.490178, delta = 0.000608
+iter(6800) error = 0.489545, delta = 0.000657
+iter(7700) error = 0.488861, delta = 0.000712
+iter(8600) error = 0.488118, delta = 0.000773
+iter(9500) error = 0.487311, delta = 0.000842
+iter(10400) error = 0.486431, delta = 0.000919
+iter(11300) error = 0.485468, delta = 0.001006
+iter(12200) error = 0.484413, delta = 0.001105
+iter(13100) error = 0.483253, delta = 0.001217
+iter(14000) error = 0.481973, delta = 0.001345
+iter(14900) error = 0.480557, delta = 0.001491
+iter(15800) error = 0.478982, delta = 0.001660
+iter(16700) error = 0.477226, delta = 0.001855
+iter(17600) error = 0.475260, delta = 0.002082
+iter(18500) error = 0.473048, delta = 0.002346
+iter(19400) error = 0.470549, delta = 0.002657
+iter(20300) error = 0.467711, delta = 0.003025
+iter(21200) error = 0.464472, delta = 0.003461
+iter(22100) error = 0.460757, delta = 0.003981
+iter(23000) error = 0.456470, delta = 0.004606
+iter(23900) error = 0.451494, delta = 0.005360
+iter(24800) error = 0.445687, delta = 0.006275
+iter(25700) error = 0.438867, delta = 0.007390
+iter(26600) error = 0.430813, delta = 0.008751
+iter(27500) error = 0.421250, delta = 0.010414
+iter(28400) error = 0.409845, delta = 0.012441
+iter(29300) error = 0.396203, delta = 0.014892
+iter(30200) error = 0.379878, delta = 0.017808
+iter(31100) error = 0.360403, delta = 0.021178
+iter(32000) error = 0.337373, delta = 0.024881
+iter(32900) error = 0.310588, delta = 0.028621
+iter(33800) error = 0.280258, delta = 0.031869
+iter(34700) error = 0.247222, delta = 0.033922
+iter(35600) error = 0.213020, delta = 0.034137
+iter(36500) error = 0.179652, delta = 0.032288
+iter(37400) error = 0.149038, delta = 0.028755
+iter(38300) error = 0.122476, delta = 0.024339
+iter(39200) error = 0.100424, delta = 0.019854
+iter(40100) error = 0.082653, delta = 0.015832
+iter(41000) error = 0.068566, delta = 0.012494
+iter(41900) error = 0.057464, delta = 0.009845
+['<Layer(3, 3, <function sigmoid at 0xb7dd210c>)>', '<Layer(3, 3, <function sigmoid at 0xb7dd210c>)>', '<Layer(3, 3, <function sigmoid at 0xb7dd210c>)>', '<Layer(3, 3, <function sigmoid at 0xb7dd210c>)>', '<Layer(3, 1, <function sigmoid at 0xb7dd210c>)>']
+[0, 0] -> [0.1428081806119007] ([0])
+[0, 1] -> [0.84908895278433194] ([1])
+[1, 0] -> [0.86533608357014313] ([1])
+[1, 1] -> [0.19497880925031583] ([0])
+Time: 15.1890990734
