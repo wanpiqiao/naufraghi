@@ -285,6 +285,7 @@ class DeepNetwork:
         def sq2(x):
             return 0.5 * x**2
         count = iterations
+        last_error = None
         while count:
             count -= 1
             error = 0.0
@@ -293,13 +294,13 @@ class DeepNetwork:
                 self._backPropagate(targets, learn)
                 error += sum(map(sq2, diff.vec(self.layers[-1].outputs, targets)))
             if __debug__:
-                if not count % 100:
+                if not count % (100 * int(math.log(iterations))):
                     print "iter(%s) error = %f, delta = %f" % (count, error, abs(error - last_error) * 100)
             if count != iterations-1:
                 if error < learn:
                     break
                 if abs(error - last_error) > learn/iterations:
-                    count += 10
+                    count += 42
             last_error = error
     def test(self, patterns):
         for inputs, targets in patterns:

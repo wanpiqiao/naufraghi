@@ -114,7 +114,7 @@ public:
      * @see resetWeightDiffs ()
      */
     void postprocessWeight (PerceptronNeuron *succ, double epsilon,
-        double weight_decay, double momterm);
+                            double weight_decay, double momterm);
 
     /** Theta postprocess algorithm. Assign the theta differences to this
      * neuron.
@@ -123,8 +123,7 @@ public:
      * @param weight_decay Weight decay factor.
      * @param momterm Momentum term factor.
      */
-    void postprocessTheta (double epsilon, double weight_decay,
-        double momterm);
+    void postprocessTheta (double epsilon, double weight_decay, double momterm);
 
     /** Update algorithm. Update weightings and theta parameter by the
      * values calculated in the postprocess step.

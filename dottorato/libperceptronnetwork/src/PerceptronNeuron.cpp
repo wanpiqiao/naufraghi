@@ -54,7 +54,7 @@ PerceptronNeuron::resetDiffs (void)
 
 void
 PerceptronNeuron::postprocessWeight (PerceptronNeuron *succ, double epsilon,
-    double weight_decay, double momterm)
+                                     double weight_decay, double momterm)
 {
     weight_diff[succ->num] +=
         /* standard backpropagation */
@@ -67,8 +67,7 @@ PerceptronNeuron::postprocessWeight (PerceptronNeuron *succ, double epsilon,
 
 
 void
-PerceptronNeuron::postprocessTheta (double epsilon, double weight_decay,
-    double momterm)
+PerceptronNeuron::postprocessTheta (double epsilon, double weight_decay, double momterm)
 {
     theta_diff += epsilon * delta -
         /* weight decay term */
