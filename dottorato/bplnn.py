@@ -42,6 +42,12 @@ def print_exc_plus():
                 print "<ERROR WHILE PRINTING VALUE>"
 
 
+def print_stats(patterns):
+    print "patterns =", len(patterns)
+    print "features =", len(patterns[0][0])
+    print "targets  =", len(patterns[0][1])
+
+
 def trace(s, sep='-'):
     s = (" %s " % s).center(70, sep)
     print sep*len(s)
