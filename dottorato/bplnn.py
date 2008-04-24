@@ -145,8 +145,8 @@ class Layer:
         self.inputs = [1.0]*n_in
         self.outputs = [1.0]*n_out # squash(activations)
         self.weights = makeMatrix(n_out, n_in, _rand)
-        self.delta_inputs = [0.0]*self.n_in
-        self.delta_outputs = [0.0]*self.n_out
+        self.delta_inputs = [0.0]*n_in
+        self.delta_outputs = [0.0]*n_out
         self.next = None
         self.prev = None
     def propagate(self, inputs=None):
