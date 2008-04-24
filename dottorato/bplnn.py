@@ -7,6 +7,7 @@ import math
 import time
 import random
 
+'''
 def print_exc_plus():
     """
     Print the usual traceback information, followed by a listing of all the
@@ -40,7 +41,7 @@ def print_exc_plus():
                 print value
             except:
                 print "<ERROR WHILE PRINTING VALUE>"
-
+'''
 
 def print_stats(patterns):
     print "patterns =", len(patterns)
@@ -65,8 +66,9 @@ def assertEqual(a, b, message=None):
         raise ValueError(message)
 
 # calculate a random number where:  a <= rand < b
-def rand(a, b):
-    return (b-a)*random.random() + a
+#def rand(a, b):
+#    return (b-a)*random.random() + a
+rand = random.uniform
 
 def dot(vec1, vec2):
     """
@@ -76,15 +78,20 @@ def dot(vec1, vec2):
     """
     return sum([x * w for (x, w) in zip(vec1, vec2)])
 
-def _vec(func):
-    def __vec(vec1, vec2, out=None):
+def map(func, args):
+    return [func(arg) for arg in args]
+
+'''
+class _vec:
+    def __init__(self, func):
+        self.func = func
+    def __call__(self, vec1, vec2, out=None):
         if out == None:
-            return [func(x, w) for (x, w) in zip(vec1, vec2)]
+            return [self.func(x, w) for (x, w) in zip(vec1, vec2)]
         else:
             for i in range(len(out)):
-                out[i] = func(vec1[i], vec2[i])
+                out[i] = self.func(vec1[i], vec2[i])
             return out
-    return __vec
 
 def _map(func):
     def __map(vec, out=None):
@@ -94,38 +101,49 @@ def _map(func):
             for i in range(len(out)):
                 out[i] = func(vec[i])
     return __map
+'''
+class Sigmoid:
+    def func(self, val):
+        return 1.0 / (1.0 + math.exp(-val))
+    def deriv(self, val):
+        return val * (1.0 - val)
+sigmoid = Sigmoid()
+#sigmoid.vec = _vec(sigmoid)
+#sigmoid.map = _map(sigmoid)
+#sigmoid.deriv = sigmoid_deriv
+#sigmoid.deriv.vec = _vec(sigmoid_deriv)
+#sigmoid.deriv.map = _map(sigmoid_deriv)
 
-def sigmoid(val):
-    return 1.0 / (1.0 + math.exp(-val))
-def sigmoid_deriv(val):
-    return val * (1.0 - val)
-sigmoid.vec = _vec(sigmoid)
-sigmoid.map = _map(sigmoid)
-sigmoid.deriv = sigmoid_deriv
-sigmoid.deriv.vec = _vec(sigmoid_deriv)
-sigmoid.deriv.map = _map(sigmoid_deriv)
-
-def qloss(output, target):
+def qloss(arg):
+    output, target = arg[0], arg[1]
     return sigmoid.deriv(output) * (target - output)
-qloss.vec = _vec(qloss)
+#qloss.vec = _vec(qloss)
 
-def diff(a, b):
+def diff(arg):
+    a, b = arg[0], arg[1]
     return a - b
-diff.vec = _vec(diff)
+#diff.vec = _vec(diff)
+
+def sq2(x):
+    return 0.5 * x**2
+
+def _rand():
+    return rand(-2.0, 2.0)
 
 def makeMatrix(rows, cols, fill=0.0):
     """
     >>> makeMatrix(2, 3)
     [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
-    >>> import random
-    >>> random.seed(0)
-    >>> makeMatrix(2, 3, random.random)
-    [[0.84442185152504812, 0.75795440294030247, 0.420571580830845],\
- [0.25891675029296335, 0.51127472136860852, 0.40493413745041429]]
     """
-    def _fill():
-        return callable(fill) and fill() or fill
-    return [[_fill() for j in range(cols)] for i in range(rows)]
+    return [[fill]*cols for i in range(rows)]
+
+def randomizeMatrix(matrix, rand=random.random):
+    rows = len(matrix)
+    cols = len(matrix[0])
+    for i in range(rows):
+        for j in range(cols):
+            matrix[i][j] = rand()
+    return matrix
 
 def transposed(matrix):
     """
@@ -133,18 +151,23 @@ def transposed(matrix):
     >>> transposed([[1,2,3], [4,5,6]])
     [(1, 4), (2, 5), (3, 6)]
     """
-    return zip(*matrix)
+    rows = len(matrix)
+    cols = len(matrix[0])
+    new_matrix = makeMatrix(cols, rows)
+    for i in range(rows):
+        for j in range(cols):
+            new_matrix[j][i] = matrix[i][j]
+    return new_matrix
 
 class Layer:
     def __init__(self, n_in, n_out, squash=sigmoid):
-        def _rand():
-            return rand(-2.0, 2.0)
         self.n_in = range(n_in)
         self.n_out = range(n_out)
         self.squash = squash
         self.inputs = [1.0]*n_in
         self.outputs = [1.0]*n_out # squash(activations)
-        self.weights = makeMatrix(n_out, n_in, _rand)
+        self.weights = makeMatrix(n_out, n_in)
+        randomizeMatrix(self.weights, _rand)
         self.delta_inputs = [0.0]*n_in
         self.delta_outputs = [0.0]*n_out
         self.next = None
@@ -158,13 +181,13 @@ class Layer:
                 raise ValueError("Inputs are not allowed in the middle of a chain!!")
         #if __debug__: print "propagate(%s): outputs = %s ->" % (self.inputs, self.outputs),
         for k in self.n_out:
-            self.outputs[k] = self.squash(dot(self.weights[k], self.inputs))
+            self.outputs[k] = self.squash.func(dot(self.weights[k], self.inputs))
         #if __debug__: print "%s" % self.outputs
     def backPropagate(self, targets=None):
         if targets != None:
             if __debug__: assertEqual(len(targets), len(self.n_out))
             if self.next == None:
-                self.delta_outputs = qloss.vec(self.outputs, targets)
+                self.delta_outputs = map(qloss, zip(self.outputs, targets))
             else:
                 raise ValueError("Targets are not allowed in the middle of a chain!!")
         _weights = transposed(self.weights)
@@ -194,7 +217,7 @@ class Layer:
                 res.append(_w)
         return "\n".join(res + ["}"])
     def __str__(self):
-        return "<Layer(%s, %s, %s)>" % (len(self.n_in), len(self.n_out), self.squash.__name__)
+        return "<Layer(%s, %s, %s)>" % (len(self.n_in), len(self.n_out), self.squash.__class__)
 
 
 class ShallowNetwork:
@@ -216,14 +239,12 @@ class ShallowNetwork:
         self.in_layer.updateWeights(learn)
         self.out_layer.updateWeights(learn)
     def train(self, patterns, iterations=1000, learn=0.05):
-        def sq2(x):
-            return 0.5 * x**2
         for i in range(iterations):
             error = 0.0
             for inputs, targets in patterns:
                 self._propagate(inputs)
                 self._backPropagate(targets, learn)
-                error += sum(map(sq2, diff.vec(self.out_layer.outputs, targets)))
+                error += sum(map(sq2, map(diff, zip(self.out_layer.outputs, targets))))
             if __debug__:
                 if not i % 100:
                     print "iter(%s) error = %f" % (i, error)
@@ -281,8 +302,6 @@ class DeepNetwork:
         self._prepare(patterns, iterations/10, learn)
         if __debug__:
             trace("train")
-        def sq2(x):
-            return 0.5 * x**2
         count = iterations
         last_error = None
         while count:
@@ -291,15 +310,15 @@ class DeepNetwork:
             for inputs, targets in patterns:
                 self._propagate(inputs + [1.0])
                 self._backPropagate(targets, learn)
-                error += sum(map(sq2, diff.vec(self.layers[-1].outputs, targets)))
+                error += sum(map(sq2, map(diff, zip(self.layers[-1].outputs, targets))))
             if __debug__:
                 if not count % (100 * int(math.log(iterations))):
                     print "iter(%s) error = %f, delta = %f" % (count, error, abs(error - last_error) * 100)
             if count != iterations-1:
                 if error < learn:
                     break
-                if abs(error - last_error) > learn/iterations:
-                    count += 42
+                if abs(error - last_error) > learn/(iterations/10):
+                    count = min(count + 42, iterations * 10)
             last_error = error
     def test(self, patterns):
         for inputs, targets in patterns:
@@ -313,10 +332,10 @@ class DeepNetwork:
 def demo():
     # Teach network XOR function
     patterns = [
-        [[0,0], [0]],
-        [[0,1], [1]],
-        [[1,0], [1]],
-        [[1,1], [0]]
+        [[0.0,0.0], [0.0]],
+        [[0.0,1.0], [1.0]],
+        [[1.0,0.0], [1.0]],
+        [[1.0,1.0], [0.0]]
     ]
 
     # create a network
@@ -330,6 +349,12 @@ def demo():
 
 
 if __name__ == "__main__":
+    start_time = time.time()
+    demo()
+    print "Time:", (time.time() - start_time)
+
+'''
+if False and __name__ == "__main__":
     if __debug__:
         import doctest
         doctest.testmod()
@@ -339,4 +364,5 @@ if __name__ == "__main__":
         print "Time:", (time.time() - start_time)
     except:
         print_exc_plus()
+'''
 
