@@ -9,7 +9,7 @@
     Requires Pygame.
 """
 # Back-Propagation Neural Networks
-#
+# 
 # Written in Python.  See http://www.python.org/
 #
 # Neil Schemenauer <nascheme@enme.ucalgary.ca>
@@ -79,7 +79,7 @@ class ShallowNetwork:
         self.inputs = [1.0]*self.n_in
         self.hiddens = [1.0]*self.n_hid
         self.outputs = [1.0]*self.n_out
-
+        
         # create weights
         self.weights_in = makeMatrix(self.n_in, self.n_hid)
         self.weights_hid = makeMatrix(self.n_hid, self.n_out)
@@ -87,7 +87,7 @@ class ShallowNetwork:
         randomizeMatrix(self.weights_in)
         randomizeMatrix(self.weights_hid)
 
-        # last change in weights for momentum
+        # last change in weights for momentum   
         self.wchange_in = makeMatrix(self.n_in, self.n_hid)
         self.wchange_out = makeMatrix(self.n_hid, self.n_out)
 
@@ -197,18 +197,18 @@ if __name__ == '__main__':
     demo()
     PRINT_IT = False
     #sys.exit(0)
-
+    
     print 'Loading...'
     from pypy.translator.interactive import Translation
     t = Translation(demo)
-
+    
     print 'Annotating...'
     t.annotate([])
     t.viewcg()
 
     print 'Specializing...'
     t.rtype()   # enable this to see (some) lower-level Cish operations
-
+    
     print 'Compiling...'
     f = t.compile_c()
 
@@ -225,4 +225,4 @@ if __name__ == '__main__':
     t2 = time.time() - T
     print "compared to", t2
     print "a speed-up of", t2/t1
-
+    
