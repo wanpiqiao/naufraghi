@@ -7,6 +7,8 @@ import math
 import time
 import random
 
+import numpy as N
+
 def print_exc_plus():
     """
     Print the usual traceback information, followed by a listing of all the
@@ -65,8 +67,7 @@ def assertEqual(a, b, message=None):
         raise ValueError(message)
 
 # calculate a random number where:  a <= rand < b
-def rand(a, b):
-    return (b-a)*random.random() + a
+rand = random.uniform
 
 def dot(vec1, vec2):
     """
@@ -74,7 +75,7 @@ def dot(vec1, vec2):
     >>> dot([2,2,2], [1,2,3])
     12
     """
-    return sum([x * w for (x, w) in zip(vec1, vec2)])
+    return N.dot(vec1, vec2)
 
 def _vec(func):
     def __vec(vec1, vec2, out=None):
@@ -99,41 +100,42 @@ def sigmoid(val):
     return 1.0 / (1.0 + math.exp(-val))
 def sigmoid_deriv(val):
     return val * (1.0 - val)
-sigmoid.vec = _vec(sigmoid)
-sigmoid.map = _map(sigmoid)
+sigmoid.vec = N.vectorize(sigmoid)
 sigmoid.deriv = sigmoid_deriv
-sigmoid.deriv.vec = _vec(sigmoid_deriv)
-sigmoid.deriv.map = _map(sigmoid_deriv)
+sigmoid.deriv.vec = N.vectorize(sigmoid_deriv)
 
 def qloss(output, target):
     return sigmoid.deriv(output) * (target - output)
-qloss.vec = _vec(qloss)
+qloss.vec = N.vectorize(qloss)
 
 def diff(a, b):
     return a - b
-diff.vec = _vec(diff)
+diff.vec = N.vectorize(diff)
 
 def makeMatrix(rows, cols, fill=0.0):
     """
     >>> makeMatrix(2, 3)
-    [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
+    array([[ 0.,  0.,  0.],
+           [ 0.,  0.,  0.]])
     >>> import random
     >>> random.seed(0)
     >>> makeMatrix(2, 3, random.random)
-    [[0.84442185152504812, 0.75795440294030247, 0.420571580830845],\
- [0.25891675029296335, 0.51127472136860852, 0.40493413745041429]]
+    array([[ 0.84442185,  0.7579544 ,  0.42057158],
+           [ 0.25891675,  0.51127472,  0.40493414]])
     """
     def _fill():
         return callable(fill) and fill() or fill
-    return [[_fill() for j in range(cols)] for i in range(rows)]
+    return N.array([[_fill() for j in range(cols)] for i in range(rows)])
 
 def transposed(matrix):
     """
     Returns the transposed `matrix`
-    >>> transposed([[1,2,3], [4,5,6]])
-    [(1, 4), (2, 5), (3, 6)]
+    >>> transposed(N.array([[1,2,3], [4,5,6]]))
+    array([[1, 4],
+           [2, 5],
+           [3, 6]])
     """
-    return zip(*matrix)
+    return matrix.transpose()
 
 class Layer:
     def __init__(self, n_in, n_out, squash=sigmoid):
@@ -142,11 +144,11 @@ class Layer:
         self.n_in = n_in
         self.n_out = n_out
         self.squash = squash
-        self.inputs = [1.0]*n_in
-        self.outputs = [1.0]*n_out # squash(activations)
+        self.inputs = N.ones(n_in)
+        self.outputs = N.ones(n_out) # squash(activations)
         self.weights = makeMatrix(n_out, n_in, _rand)
-        self.delta_inputs = [0.0]*self.n_in
-        self.delta_outputs = [0.0]*self.n_out
+        self.delta_inputs = N.zeros(n_in)
+        self.delta_outputs = N.zeros(n_out)
         self.next = None
         self.prev = None
     def propagate(self, inputs=None):
@@ -208,7 +210,7 @@ class ShallowNetwork:
         self.out_layer = Layer(n_hid, n_out)
         self.in_layer.connect(self.out_layer)
     def _propagate(self, inputs):
-        self.in_layer.propagate(inputs + self.bias)
+        self.in_layer.propagate(N.concatenate((inputs, self.bias)))
         self.out_layer.propagate()
     def _backPropagate(self, targets, learn):
         self.out_layer.backPropagate(targets)
@@ -216,14 +218,13 @@ class ShallowNetwork:
         self.in_layer.updateWeights(learn)
         self.out_layer.updateWeights(learn)
     def train(self, patterns, iterations=1000, learn=0.05):
-        def sq2(x):
-            return 0.5 * x**2
+        sq2 = N.vectorize(lambda x: 0.5 * x**2)
         for i in range(iterations):
             error = 0.0
             for inputs, targets in patterns:
                 self._propagate(inputs)
                 self._backPropagate(targets, learn)
-                error += sum(map(sq2, diff.vec(self.out_layer.outputs, targets)))
+                error += sum(sq2(diff.vec(self.out_layer.outputs, targets)))
             if __debug__:
                 if not i % 100:
                     print "iter(%s) error = %f" % (i, error)
@@ -284,6 +285,7 @@ class DeepNetwork:
         def sq2(x):
             return 0.5 * x**2
         count = iterations
+        last_error = None
         while count:
             count -= 1
             error = 0.0
@@ -292,13 +294,13 @@ class DeepNetwork:
                 self._backPropagate(targets, learn)
                 error += sum(map(sq2, diff.vec(self.layers[-1].outputs, targets)))
             if __debug__:
-                if not count % 100:
+                if not count % (100 * int(math.log(iterations))):
                     print "iter(%s) error = %f, delta = %f" % (count, error, abs(error - last_error) * 100)
             if count != iterations-1:
                 if error < learn:
                     break
                 if abs(error - last_error) > learn/iterations:
-                    count += 10
+                    count += 42
             last_error = error
     def test(self, patterns):
         for inputs, targets in patterns:
