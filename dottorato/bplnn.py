@@ -78,25 +78,6 @@ def dot(vec1, vec2):
     return N.dot(vec1, vec2)
 dot = N.dot
 
-def _vec(func):
-    def __vec(vec1, vec2, out=None):
-        if out == None:
-            return [func(x, w) for (x, w) in zip(vec1, vec2)]
-        else:
-            for i in range(len(out)):
-                out[i] = func(vec1[i], vec2[i])
-            return out
-    return __vec
-
-def _map(func):
-    def __map(vec, out=None):
-        if out == None:
-            return map(func, vec)
-        else:
-            for i in range(len(out)):
-                out[i] = func(vec[i])
-    return __map
-
 def sigmoid(val):
     return 1.0 / (1.0 + math.exp(-val))
 def sigmoid_deriv(val):
@@ -142,8 +123,8 @@ class Layer:
     def __init__(self, n_in, n_out, squash=sigmoid):
         def _rand():
             return rand(-2.0, 2.0)
-        self.n_in = n_in
-        self.n_out = n_out
+        self.n_in = range(n_in)
+        self.n_out = range(n_out)
         self.squash = squash
         self.inputs = N.ones(n_in)
         self.outputs = N.ones(n_out) # squash(activations)
@@ -154,32 +135,33 @@ class Layer:
         self.prev = None
     def propagate(self, inputs=None):
         if inputs != None:
-            if __debug__: assertEqual(len(inputs), self.n_in)
+            if __debug__: assertEqual(len(inputs), len(self.n_in))
             if self.prev == None:
                 self.inputs = inputs
             else:
                 raise ValueError("Inputs are not allowed in the middle of a chain!!")
         #if __debug__: print "propagate(%s): outputs = %s ->" % (self.inputs, self.outputs),
-        for k in range(self.n_out):
+        for k in self.n_out:
             self.outputs[k] = self.squash(dot(self.weights[k], self.inputs))
         #if __debug__: print "%s" % self.outputs
     def backPropagate(self, targets=None):
         if targets != None:
-            if __debug__: assertEqual(len(targets), self.n_out)
+            if __debug__: assertEqual(len(targets), len(self.n_out))
             if self.next == None:
                 self.delta_outputs = qloss.vec(self.outputs, targets)
             else:
                 raise ValueError("Targets are not allowed in the middle of a chain!!")
         _weights = transposed(self.weights)
         #if __debug__: print "backPropagate(%s): delta_inputs = %s ->" % (self.delta_outputs, self.delta_inputs),
-        for j in range(self.n_in):
+        for j in self.n_in:
             self.delta_inputs[j] = self.squash.deriv(self.inputs[j]) * dot(_weights[j], self.delta_outputs)
+            #self.delta_inputs[j] = self.squash.deriv(self.inputs[j]) * dot(self.weights[:,j], self.delta_outputs)
         #if __debug__: print "%s" % self.delta_inputs
     def updateWeights(self, learn):
         # locals for performance or traceback
         # weights, deltas, inputs = self.weights, self.delta_inputs, self.inputs
-        for j in range(self.n_in):
-            for k in range(self.n_out):
+        for j in self.n_in:
+            for k in self.n_out:
                 self.weights[k][j] += learn * self.delta_outputs[k] * self.inputs[j]
     def connect(self, next):
         if __debug__: assertEqual(len(self.outputs), len(next.inputs))
@@ -197,7 +179,7 @@ class Layer:
                 res.append(_w)
         return "\n".join(res + ["}"])
     def __str__(self):
-        return "<Layer(%s, %s, %s)>" % (self.n_in, self.n_out, self.squash)
+        return "<Layer(%s, %s, %s)>" % (len(self.n_in), len(self.n_out), self.squash.__name__)
 
 
 class ShallowNetwork:
@@ -257,7 +239,8 @@ class DeepNetwork:
         for layer in self.layers:
             layer.updateWeights(learn)
     def _prepare(self, patterns, iterations, learn):
-        auto_patterns = [(inputs + [1.0], inputs + [1.0]) for inputs, targets in patterns]
+        auto_patterns = [(N.concatenate((inputs, [1.0])),
+                          N.concatenate((inputs, [1.0]))) for inputs, targets in patterns]
         if __debug__:
             trace("_prepare")
         for layer in self.layers:
