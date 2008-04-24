@@ -76,6 +76,7 @@ def dot(vec1, vec2):
     12
     """
     return N.dot(vec1, vec2)
+dot = N.dot
 
 def _vec(func):
     def __vec(vec1, vec2, out=None):
