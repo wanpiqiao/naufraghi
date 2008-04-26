@@ -7,7 +7,7 @@ import math
 import time
 import random
 
-'''
+
 def print_exc_plus():
     """
     Print the usual traceback information, followed by a listing of all the
@@ -41,7 +41,7 @@ def print_exc_plus():
                 print value
             except:
                 print "<ERROR WHILE PRINTING VALUE>"
-'''
+
 
 def print_stats(patterns):
     print "patterns =", len(patterns)
@@ -81,7 +81,7 @@ def dot(vec1, vec2):
 def map(func, args):
     return [func(arg) for arg in args]
 
-'''
+
 class _vec:
     def __init__(self, func):
         self.func = func
@@ -101,7 +101,8 @@ def _map(func):
             for i in range(len(out)):
                 out[i] = func(vec[i])
     return __map
-'''
+
+
 class Sigmoid:
     def func(self, val):
         return 1.0 / (1.0 + math.exp(-val))
@@ -349,12 +350,6 @@ def demo():
 
 
 if __name__ == "__main__":
-    start_time = time.time()
-    demo()
-    print "Time:", (time.time() - start_time)
-
-'''
-if False and __name__ == "__main__":
     if __debug__:
         import doctest
         doctest.testmod()
@@ -364,5 +359,4 @@ if False and __name__ == "__main__":
         print "Time:", (time.time() - start_time)
     except:
         print_exc_plus()
-'''
 
