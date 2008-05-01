@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+# -*- encoding: utf-8 -*-
+# Copyright (c) 2008 Matteo Bertini
+
+import cbplnn as nn
+
+def sigmoid():
+    """
+    >>> sig = nn.Sigmoid()
+    >>> sig.func(0.5)
+    0.62245933120185459
+    >>> sig.deriv(0.5)
+    0.25
+    >>> sig.loss(2.0, 2.5)
+    -1.0
+    """
+
+def Layer():
+    """
+    >>> a = nn.Layer(3, 5)
+    >>> b = nn.Layer(5, 1)
+    >>> a.connect(b)
+    >>> a.propagate([1.0, 1.0, 1.0])
+    >>> b.propagate()
+    >>> b.backPropagate([0.0])
+    0.064829365291907928
+    >>> a.backPropagate()
+    >>> a.updateWeights(0.05)
+    >>> b.updateWeights(0.05)
+    >>> a.propagate([1.0, 1.0, 1.0])
+    >>> b.propagate()
+    >>> b.backPropagate([0.0])
+    """
+
+
+if __name__ == "__main__":
+    print "dir(nn)", dir(nn)
+    import doctest
+    doctest.testmod()
