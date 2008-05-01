@@ -107,6 +107,8 @@ class ShallowNetwork:
         for inputs, targets in patterns:
             res = self.getOutputs(inputs)
             print inputs, "->", res, "(%s)" % targets
+    def __str__(self):
+        return str([self.in_layer, self.out_layer])
 
 
 class DeepNetwork:
@@ -134,12 +136,12 @@ class DeepNetwork:
         if __debug__:
             trace("prepare")
         for layer in self.layers:
-            if __debug__:
-                print "Layer", self.layers.index(layer), layer
             if self.auto_mode == "step":
                 auto_net = ShallowNetwork(len(layer.getInputs()), len(layer.getOutputs()), len(layer.getInputs()), bias=False)
             else:
                 auto_net = ShallowNetwork(len(layer.getInputs()), len(layer.getOutputs()), len(self.layers[0].getInputs()), bias=False)
+            if __debug__:
+                print "auto_net:", auto_net
             auto_net.train(auto_patterns, iterations, learn)
             layer.setWeights(auto_net.in_layer)
             new_auto_patterns = []
