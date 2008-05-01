@@ -7,6 +7,7 @@ import math
 import time
 import random
 
+from cbplnn import Layer
 
 def print_exc_plus():
     """
@@ -65,161 +66,6 @@ def assertEqual(a, b, message=None):
     if a != b:
         raise ValueError(message)
 
-# calculate a random number where:  a <= rand < b
-#def rand(a, b):
-#    return (b-a)*random.random() + a
-rand = random.uniform
-
-def dot(vec1, vec2):
-    """
-    Vector dot product
-    >>> dot([2,2,2], [1,2,3])
-    12
-    """
-    return sum([x * w for (x, w) in zip(vec1, vec2)])
-
-def map(func, args):
-    return [func(arg) for arg in args]
-
-
-class _vec:
-    def __init__(self, func):
-        self.func = func
-    def __call__(self, vec1, vec2, out=None):
-        if out == None:
-            return [self.func(x, w) for (x, w) in zip(vec1, vec2)]
-        else:
-            for i in range(len(out)):
-                out[i] = self.func(vec1[i], vec2[i])
-            return out
-
-def _map(func):
-    def __map(vec, out=None):
-        if out == None:
-            return map(func, vec)
-        else:
-            for i in range(len(out)):
-                out[i] = func(vec[i])
-    return __map
-
-
-class Sigmoid:
-    def func(self, val):
-        return 1.0 / (1.0 + math.exp(-val))
-    def deriv(self, val):
-        return val * (1.0 - val)
-sigmoid = Sigmoid()
-#sigmoid.vec = _vec(sigmoid)
-#sigmoid.map = _map(sigmoid)
-#sigmoid.deriv = sigmoid_deriv
-#sigmoid.deriv.vec = _vec(sigmoid_deriv)
-#sigmoid.deriv.map = _map(sigmoid_deriv)
-
-def qloss(arg):
-    output, target = arg[0], arg[1]
-    return sigmoid.deriv(output) * (target - output)
-#qloss.vec = _vec(qloss)
-
-def diff(arg):
-    a, b = arg[0], arg[1]
-    return a - b
-#diff.vec = _vec(diff)
-
-def sq2(x):
-    return 0.5 * x**2
-
-def _rand():
-    return rand(-2.0, 2.0)
-
-def makeMatrix(rows, cols, fill=0.0):
-    """
-    >>> makeMatrix(2, 3)
-    [[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]
-    """
-    return [[fill]*cols for i in range(rows)]
-
-def randomizeMatrix(matrix, rand=random.random):
-    rows = len(matrix)
-    cols = len(matrix[0])
-    for i in range(rows):
-        for j in range(cols):
-            matrix[i][j] = rand()
-    return matrix
-
-def transposed(matrix):
-    """
-    Returns the transposed `matrix`
-    >>> transposed([[1,2,3], [4,5,6]])
-    [(1, 4), (2, 5), (3, 6)]
-    """
-    rows = len(matrix)
-    cols = len(matrix[0])
-    new_matrix = makeMatrix(cols, rows)
-    for i in range(rows):
-        for j in range(cols):
-            new_matrix[j][i] = matrix[i][j]
-    return new_matrix
-
-class Layer:
-    def __init__(self, n_in, n_out, squash=sigmoid):
-        self.n_in = range(n_in)
-        self.n_out = range(n_out)
-        self.squash = squash
-        self.inputs = [1.0]*n_in
-        self.outputs = [1.0]*n_out # squash(activations)
-        self.weights = makeMatrix(n_out, n_in)
-        randomizeMatrix(self.weights, _rand)
-        self.delta_inputs = [0.0]*n_in
-        self.delta_outputs = [0.0]*n_out
-        self.next = None
-        self.prev = None
-    def propagate(self, inputs=None):
-        if inputs != None:
-            if __debug__: assertEqual(len(inputs), len(self.n_in))
-            if self.prev == None:
-                self.inputs = inputs
-            else:
-                raise ValueError("Inputs are not allowed in the middle of a chain!!")
-        #if __debug__: print "propagate(%s): outputs = %s ->" % (self.inputs, self.outputs),
-        for k in self.n_out:
-            self.outputs[k] = self.squash.func(dot(self.weights[k], self.inputs))
-        #if __debug__: print "%s" % self.outputs
-    def backPropagate(self, targets=None):
-        if targets != None:
-            if __debug__: assertEqual(len(targets), len(self.n_out))
-            if self.next == None:
-                self.delta_outputs = map(qloss, zip(self.outputs, targets))
-            else:
-                raise ValueError("Targets are not allowed in the middle of a chain!!")
-        _weights = transposed(self.weights)
-        #if __debug__: print "backPropagate(%s): delta_inputs = %s ->" % (self.delta_outputs, self.delta_inputs),
-        for j in self.n_in:
-            self.delta_inputs[j] = self.squash.deriv(self.inputs[j]) * dot(_weights[j], self.delta_outputs)
-        #if __debug__: print "%s" % self.delta_inputs
-    def updateWeights(self, learn):
-        # locals for performance or traceback
-        # weights, deltas, inputs = self.weights, self.delta_inputs, self.inputs
-        for j in self.n_in:
-            for k in self.n_out:
-                self.weights[k][j] += learn * self.delta_outputs[k] * self.inputs[j]
-    def connect(self, next):
-        if __debug__: assertEqual(len(self.outputs), len(next.inputs))
-        self.next = next
-        next.prev = self
-        next.inputs = self.outputs
-        next.delta_inputs = self.delta_outputs
-    def graphviz(self):
-        res = ["digraph Layer {", "rankdir = LR;"]
-        res += [" subgraph Layer_in {"] + [" " + " ".join(["I%s" % i for i in range(len(self.inputs))]) + ";"] + [" }"]
-        res += [" subgraph Layer_out {"] + [" " + " ".join(["O%s" % j for j in range(len(self.outputs))]) + ";"] + [" }"]
-        for i, input in enumerate(self.inputs):
-            for j, output in enumerate(self.outputs):
-                _w = "%s -> %s [label = %f];" % ("I%s" % i, "O%s" % j, self.weights[j][i])
-                res.append(_w)
-        return "\n".join(res + ["}"])
-    def __str__(self):
-        return "<Layer(%s, %s, %s)>" % (len(self.n_in), len(self.n_out), self.squash.__class__)
-
 
 class ShallowNetwork:
     def __init__(self, n_in, n_hid, n_out, bias=True):
@@ -228,33 +74,38 @@ class ShallowNetwork:
         else:
             self.bias = []
         n_in = n_in + len(self.bias)
+        random.seed(123)
         self.in_layer = Layer(n_in, n_hid)
         self.out_layer = Layer(n_hid, n_out)
         self.in_layer.connect(self.out_layer)
-    def _propagate(self, inputs):
+    def propagate(self, inputs):
         self.in_layer.propagate(inputs + self.bias)
         self.out_layer.propagate()
-    def _backPropagate(self, targets, learn):
-        self.out_layer.backPropagate(targets)
+    def backPropagate(self, targets):
+        err = self.out_layer.backPropagate(targets)
         self.in_layer.backPropagate()
+        return err
+    def updateWeights(self, learn):
         self.in_layer.updateWeights(learn)
         self.out_layer.updateWeights(learn)
+    def getOutputs(self, inputs):
+        self.propagate(inputs)
+        return self.out_layer.getOutputs()
     def train(self, patterns, iterations=1000, learn=0.05):
         for i in range(iterations):
             error = 0.0
             for inputs, targets in patterns:
-                self._propagate(inputs)
-                self._backPropagate(targets, learn)
-                error += sum(map(sq2, map(diff, zip(self.out_layer.outputs, targets))))
+                self.propagate(inputs)
+                error += self.backPropagate(targets)
+                self.updateWeights(learn)
             if __debug__:
-                if not i % 100:
+                if not i % (1+iterations/100):
                     print "iter(%s) error = %f" % (i, error)
             if error < learn:
                 break
     def test(self, patterns):
         for inputs, targets in patterns:
-            self._propagate(inputs)
-            res = self.out_layer.outputs
+            res = self.getOutputs(inputs)
             print inputs, "->", res, "(%s)" % targets
 
 
@@ -266,33 +117,35 @@ class DeepNetwork:
     def _connect(self):
         for i in range(len(self.layers)-1):
             self.layers[i].connect(self.layers[i+1])
-    def _propagate(self, inputs):
+    def propagate(self, inputs):
         self.layers[0].propagate(inputs)
         for layer in self.layers[1:]:
             layer.propagate()
-    def _backPropagate(self, targets, learn):
-        self.layers[-1].backPropagate(targets)
+    def backPropagate(self, targets):
+        err = self.layers[-1].backPropagate(targets)
         for layer in reversed(self.layers[:-1]):
             layer.backPropagate()
+        return err
+    def updateWeights(self, learn):
         for layer in self.layers:
             layer.updateWeights(learn)
-    def _prepare(self, patterns, iterations, learn):
+    def prepare(self, patterns, iterations, learn):
         auto_patterns = [(inputs + [1.0], inputs + [1.0]) for inputs, targets in patterns]
         if __debug__:
-            trace("_prepare")
+            trace("prepare")
         for layer in self.layers:
             if __debug__:
                 print "Layer", self.layers.index(layer), layer
             if self.auto_mode == "step":
-                auto_net = ShallowNetwork(len(layer.inputs), len(layer.outputs), len(layer.inputs), bias=False)
+                auto_net = ShallowNetwork(len(layer.getInputs()), len(layer.getOutputs()), len(layer.getInputs()), bias=False)
             else:
-                auto_net = ShallowNetwork(len(layer.inputs), len(layer.outputs), len(self.layers[0].inputs), bias=False)
+                auto_net = ShallowNetwork(len(layer.getInputs()), len(layer.getOutputs()), len(self.layers[0].getInputs()), bias=False)
             auto_net.train(auto_patterns, iterations, learn)
-            layer.weights = auto_net.in_layer.weights
+            layer.setWeights(auto_net.in_layer)
             new_auto_patterns = []
             for inputs, targets in auto_patterns:
-                auto_net._propagate(inputs)
-                new_inputs = auto_net.out_layer.inputs
+                auto_net.propagate(inputs)
+                new_inputs = auto_net.out_layer.getInputs()
                 if self.auto_mode == "step":
                     new_auto_patterns.append((new_inputs, new_inputs))
                 else:
@@ -300,31 +153,28 @@ class DeepNetwork:
             auto_patterns = new_auto_patterns
         self._connect()
     def train(self, patterns, iterations=1000, learn=0.05):
-        self._prepare(patterns, iterations/10, learn)
+        self.prepare(patterns, 20, learn)
         if __debug__:
             trace("train")
-        count = iterations
-        last_error = None
-        while count:
-            count -= 1
+        count = iterations * len(patterns)
+        step = 1 #10 * int(math.log(iterations * len(patterns)))
+        err = learn/(iterations/10)
+        while count > 0:
+            count -= len(patterns)
             error = 0.0
             for inputs, targets in patterns:
-                self._propagate(inputs + [1.0])
-                self._backPropagate(targets, learn)
-                error += sum(map(sq2, map(diff, zip(self.layers[-1].outputs, targets))))
+                self.propagate(inputs + [1.0])
+                error += self.backPropagate(targets)
+                self.updateWeights(learn)
             if __debug__:
-                if not count % (100 * int(math.log(iterations))):
-                    print "iter(%s) error = %f, delta = %f" % (count, error, abs(error - last_error) * 100)
-            if count != iterations-1:
-                if error < learn:
-                    break
-                if abs(error - last_error) > learn/(iterations/10):
-                    count = min(count + 42, iterations * 10)
-            last_error = error
+                if not count % step:
+                    print "iter(%s) error = %f" % (count, error)
+            if error < err:
+                break
     def test(self, patterns):
         for inputs, targets in patterns:
-            self._propagate(inputs + [1.0])
-            res = self.layers[-1].outputs
+            self.propagate(inputs + [1.0])
+            res = self.layers[-1].getOutputs()
             print inputs, "->", res, "(%s)" % targets
     def __str__(self):
         return str(map(str, self.layers))
