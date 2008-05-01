@@ -2,7 +2,11 @@
 # -*- encoding: utf-8 -*-
 # Copyright (C) 2008 Matteo Bertini
 
+import os
 import sys
+
+os.chdir(os.path.dirname(__file__))
+
 sys.path.append("../")
 
 from bplnn import *
@@ -28,10 +32,9 @@ def run():
     n_in = len(patterns[0][0])
     n_out = len(patterns[0][1])
     net = DeepNetwork([n_in, n_in*2, n_in, n_out*2, n_out])
-    net.train(patterns, 10000)
+    net.train(patterns, 1000)
     print net
     test_patterns = load_data("pendigits.tes")
-    
 
 
 if __name__=="__main__":
