@@ -17,23 +17,24 @@ def sigmoid():
 
 def Layer():
     """
+    >>> nn.random.seed(42)
     >>> a = nn.Layer(3, 5)
     >>> b = nn.Layer(5, 1)
     >>> a.connect(b)
     >>> a.propagate([1.0, 1.0, 1.0])
     >>> b.propagate()
     >>> b.backPropagate([0.0])
-    0.064829365291907928
+    0.059802896118833375
     >>> a.backPropagate()
     >>> a.updateWeights(0.05)
     >>> b.updateWeights(0.05)
     >>> a.propagate([1.0, 1.0, 1.0])
     >>> b.propagate()
     >>> b.backPropagate([0.0])
+    0.059536206785404909
     """
 
 
 if __name__ == "__main__":
-    print "dir(nn)", dir(nn)
     import doctest
     doctest.testmod()
