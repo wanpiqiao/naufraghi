@@ -153,7 +153,7 @@ class DeepNetwork:
             auto_patterns = new_auto_patterns
         self._connect()
     def train(self, patterns, iterations=1000, learn=0.05):
-        self.prepare(patterns, 20, learn)
+        self.prepare(patterns, 10+iterations/100, learn)
         if __debug__:
             trace("train")
         count = iterations * len(patterns)

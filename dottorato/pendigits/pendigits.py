@@ -32,9 +32,11 @@ def run():
     n_in = len(patterns[0][0])
     n_out = len(patterns[0][1])
     net = DeepNetwork([n_in, n_in*2, n_in, n_out*2, n_out])
-    net.train(patterns, 1000)
+    net.train(patterns, 5000)
     print net
     test_patterns = load_data("pendigits.tes")
+    net.test(test_patterns)
+
 
 
 if __name__=="__main__":
