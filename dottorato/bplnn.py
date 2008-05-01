@@ -151,7 +151,7 @@ class DeepNetwork:
                 if self.auto_mode == "step":
                     new_auto_patterns.append((new_inputs, new_inputs))
                 else:
-                    new_auto_patterns.append((new_inputs, inputs))
+                    new_auto_patterns.append((new_inputs, targets))
             auto_patterns = new_auto_patterns
         self._connect()
     def train(self, patterns, iterations=1000, learn=0.05):
@@ -200,7 +200,7 @@ def demo():
 
     # create a network
     #net = ShallowNetwork(2, 5, 1)
-    net = DeepNetwork([2, 3, 3, 3, 3, 1], ["step", "input"][0])
+    net = DeepNetwork([2, 3, 3, 3, 3, 1], ["step", "input"][1])
     # train it with some patterns
     net.train(patterns, 100000)
     # test it
