@@ -174,12 +174,19 @@ class DeepNetwork:
             if error < err:
                 break
     def test(self, patterns):
+        def getId(targets):
+            return targets.index(max(targets))
+        res = {}
         for inputs, targets in patterns:
             self.propagate(inputs + [1.0])
-            res = self.layers[-1].getOutputs()
-            print inputs, "->", res, "(%s)" % targets
+            outputs = self.layers[-1].getOutputs()
+            idx = getId(targets)
+            res.setdefault(idx, {})
+            is_ok = (idx == getId(outputs))
+            res[idx][is_ok] = res[idx].get(is_ok, 0) + 1
+        print res
     def __str__(self):
-        return str(map(str, self.layers))
+        return str(self.layers)
 
 
 def demo():
