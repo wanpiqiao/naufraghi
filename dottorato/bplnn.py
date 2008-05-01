@@ -100,7 +100,7 @@ class ShallowNetwork:
                 self.updateWeights(learn)
             if __debug__:
                 if not i % (1+iterations/100):
-                    print "iter(%s) error = %f" % (i, error)
+                    print "iter(%s) error = %f" % (iterations - i, error)
             if error < learn:
                 break
     def test(self, patterns):
@@ -113,7 +113,7 @@ class DeepNetwork:
     def __init__(self, n_nodes, auto_mode="step"):
         n_nodes[0] += 1 # bias
         self.layers = [Layer(n_in, n_out) for n_in, n_out in zip(n_nodes[:-1], n_nodes[1:])]
-        self.auto_mode = "step"
+        self.auto_mode = auto_mode
     def _connect(self):
         for i in range(len(self.layers)-1):
             self.layers[i].connect(self.layers[i+1])
