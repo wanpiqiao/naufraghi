@@ -157,7 +157,7 @@ class DeepNetwork:
         if __debug__:
             trace("train")
         count = iterations * len(patterns)
-        step = 1 #10 * int(math.log(iterations * len(patterns)))
+        step = int(math.log(iterations * len(patterns)))
         err = learn/(iterations/10)
         while count > 0:
             count -= len(patterns)
@@ -193,7 +193,7 @@ def demo():
     #net = ShallowNetwork(2, 5, 1)
     net = DeepNetwork([2, 3, 3, 3, 3, 1], ["step", "input"][0])
     # train it with some patterns
-    net.train(patterns, 10000)
+    net.train(patterns, 100000)
     # test it
     print net
     net.test(patterns)
