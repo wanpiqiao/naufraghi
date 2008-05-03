@@ -22,7 +22,7 @@ def load_data(filename):
         # digitalize outputs
         targets = [int(i == number) for i in range(10)]
         data.append([inputs, targets])
-    print_stats(data)
+    print stats(data)
     print "-"*70
     return data
 
@@ -36,6 +36,7 @@ def run():
     print net
     test_patterns = load_data("pendigits.tes")
     net.test(test_patterns)
+    print net.dump()
 
 
 
