@@ -97,7 +97,7 @@ cdef class Layer:
         next.connected = 1
         next.inputs = self.outputs
         next.delta_inputs = self.delta_outputs
-    cpdef setWeights(self, Layer other):
+    cpdef copyWeights(self, Layer other):
         for j from 0 <= j < self.n_in:
             for k from 0 <= k < self.n_out:
                 self.weights[k][j] = other.weights[k][j]
@@ -106,6 +106,17 @@ cdef class Layer:
         for j from 0 <= j < self.n_in:
             res.append(self.inputs[j])
         return res
+    def getWeights(self):
+        res = []
+        for k from 0 <= k < self.n_out:
+            res.append([])
+            for j from 0 <= j < self.n_in:
+                res[k].append(self.weights[k][j])
+        return res
+    def setWeights(self, weights):
+        for k from 0 <= k < self.n_out:
+            for j from 0 <= j < self.n_in:
+                self.weights[k][j] = weights[k][j]
     def getOutputs(self, inputs=None):
         if inputs != None:
             self.propagate(inputs)
@@ -114,17 +125,10 @@ cdef class Layer:
             res.append(self.outputs[k])
         return res
     def dump(self):
-        res = []
-        for j from 0 <= j < self.n_in:
-            res += ["inputs[%d] = %f" % (j, self.inputs[j])]
-            res += ["delta_inputs[%d] = %f" % (j, self.delta_inputs[j])]
-        for k from 0 <= k < self.n_out:
-            res += ["outputs[%d] = %f" % (k, self.outputs[k])]
-            res += ["delta_outputs[%d] = %f" % (k, self.delta_outputs[k])]
-        for k from 0 <= k < self.n_out:
-            for j from 0 <= j < self.n_in:
-                res += ["weights[%d][%d] = %f" % (k, j, self.weights[k][j])]
-        return "\n".join(res)
+        res = [self.getInputs(),
+               self.getWeights(),
+               self.getOutputs()]
+        return str(res)
     def __repr__(self):
         return "<Layer %d %d>" % (self.n_in, self.n_out)
     def __dealloc__(self):
@@ -138,6 +142,4 @@ cdef class Layer:
         free(self.delta_outputs)
         free(self.targets)
 
-cpdef double sq2(x):
-    return 0.5 * pow(x, 2.0)
 
