@@ -7,7 +7,11 @@ import math
 import time
 import random
 
+import logging
+
 from cbplnn import Layer
+
+logging.getLogger().setLevel(logging.INFO)
 
 def print_exc_plus():
     """
@@ -44,17 +48,16 @@ def print_exc_plus():
                 print "<ERROR WHILE PRINTING VALUE>"
 
 
-def print_stats(patterns):
-    print "patterns =", len(patterns)
-    print "features =", len(patterns[0][0])
-    print "targets  =", len(patterns[0][1])
+def stats(patterns):
+    return "\n".join(["patterns = %s" % len(patterns),
+                      "features = %s" % len(patterns[0][0]),
+                      "targets  = %s" % len(patterns[0][1])])
 
 
 def trace(s, sep='-'):
     s = (" %s " % s).center(70, sep)
-    print sep*len(s)
-    print s
-    print sep*len(s)
+    row = sep*len(s)
+    return "\n".join([row, s, row])
 
 
 def assertEqual(a, b, message=None):
@@ -98,17 +101,18 @@ class ShallowNetwork:
                 self.propagate(inputs)
                 error += self.backPropagate(targets)
                 self.updateWeights(learn)
-            if __debug__:
-                if not i % (1+iterations/100):
-                    print "iter(%s) error = %f" % (iterations - i, error)
+            if not i % (1+iterations/100):
+                logging.debug("iter(%s) error = %f" % (iterations - i, error))
             if error < learn:
                 break
     def test(self, patterns):
         for inputs, targets in patterns:
             res = self.getOutputs(inputs)
-            print inputs, "->", res, "(%s)" % targets
+            logging.info("%s -> %s (%s)" % (inputs, res, targets))
+    def dump(self):
+        return str([self.in_layer.dump(), self.out_layer.dump()])
     def __str__(self):
-        return str([self.in_layer, self.out_layer])
+        return "<ShallowNetwork %s>" % str([self.in_layer, self.out_layer])
 
 
 class DeepNetwork:
@@ -133,17 +137,15 @@ class DeepNetwork:
             layer.updateWeights(learn)
     def prepare(self, patterns, iterations, learn):
         auto_patterns = [(inputs + [1.0], inputs + [1.0]) for inputs, targets in patterns]
-        if __debug__:
-            trace("prepare")
+        logging.info("prepare")
         for layer in self.layers:
             if self.auto_mode == "step":
                 auto_net = ShallowNetwork(len(layer.getInputs()), len(layer.getOutputs()), len(layer.getInputs()), bias=False)
             else:
                 auto_net = ShallowNetwork(len(layer.getInputs()), len(layer.getOutputs()), len(self.layers[0].getInputs()), bias=False)
-            if __debug__:
-                print "auto_net:", auto_net
+            logging.debug("auto_net: %s" % auto_net)
             auto_net.train(auto_patterns, iterations, learn)
-            layer.setWeights(auto_net.in_layer)
+            layer.copyWeights(auto_net.in_layer)
             new_auto_patterns = []
             for inputs, targets in auto_patterns:
                 auto_net.propagate(inputs)
@@ -156,8 +158,7 @@ class DeepNetwork:
         self._connect()
     def train(self, patterns, iterations=1000, learn=0.05):
         self.prepare(patterns, 10+iterations/100, learn)
-        if __debug__:
-            trace("train")
+        logging.info("train")
         count = iterations * len(patterns)
         step = int(math.log(iterations * len(patterns)))
         err = learn/(iterations/10)
@@ -168,9 +169,8 @@ class DeepNetwork:
                 self.propagate(inputs + [1.0])
                 error += self.backPropagate(targets)
                 self.updateWeights(learn)
-            if __debug__:
-                if not count % step:
-                    print "iter(%s) error = %f" % (count, error)
+            if not count % step:
+                logging.debug("iter(%s) error = %f" % (count, error))
             if error < err:
                 break
     def test(self, patterns):
@@ -184,9 +184,11 @@ class DeepNetwork:
             res.setdefault(idx, {})
             is_ok = (idx == getId(outputs))
             res[idx][is_ok] = res[idx].get(is_ok, 0) + 1
-        print res
+        logging.info(res)
+    def dump(self):
+        return str([l.dump() for l in self.layers])
     def __str__(self):
-        return str(self.layers)
+        return "<DeepNetwork %s>" % str(self.layers)
 
 
 def demo():
@@ -202,7 +204,7 @@ def demo():
     #net = ShallowNetwork(2, 5, 1)
     net = DeepNetwork([2, 3, 3, 3, 3, 1], ["step", "input"][1])
     # train it with some patterns
-    net.train(patterns, 100000)
+    net.train(patterns, 10000)
     # test it
     print net
     net.test(patterns)
