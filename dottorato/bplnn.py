@@ -11,7 +11,7 @@ import logging
 
 from cbplnn import Layer
 
-logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().setLevel(logging.DEBUG)
 
 def print_exc_plus():
     """
@@ -138,13 +138,14 @@ class DeepNetwork:
     def prepare(self, patterns, iterations, learn):
         auto_patterns = [(inputs + [1.0], inputs + [1.0]) for inputs, targets in patterns]
         logging.info("prepare")
-        for layer in self.layers:
+        earlystop = iterations / (2 * len(self.layers))
+        for c, layer in enumerate(self.layers):
             if self.auto_mode == "step":
                 auto_net = ShallowNetwork(len(layer.getInputs()), len(layer.getOutputs()), len(layer.getInputs()), bias=False)
             else:
                 auto_net = ShallowNetwork(len(layer.getInputs()), len(layer.getOutputs()), len(self.layers[0].getInputs()), bias=False)
             logging.debug("auto_net: %s" % auto_net)
-            auto_net.train(auto_patterns, iterations, learn)
+            auto_net.train(auto_patterns, iterations - (c * earlystop), learn)
             layer.copyWeights(auto_net.in_layer)
             new_auto_patterns = []
             for inputs, targets in auto_patterns:
@@ -159,11 +160,11 @@ class DeepNetwork:
     def train(self, patterns, iterations=1000, learn=0.05):
         self.prepare(patterns, 20+iterations/100, learn)
         logging.info("train")
-        count = iterations * len(patterns)
-        step = int(math.log(iterations * len(patterns)))
+        count = iterations
+        step = 10 + int(math.log(iterations))
         err = learn/(iterations/10)
         while count > 0:
-            count -= len(patterns)
+            count -= 1
             error = 0.0
             for inputs, targets in patterns:
                 self.propagate(inputs + [1.0])
