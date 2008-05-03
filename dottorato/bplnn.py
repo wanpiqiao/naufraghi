@@ -57,7 +57,7 @@ def stats(patterns):
 def trace(s, sep='-'):
     s = (" %s " % s).center(70, sep)
     row = sep*len(s)
-    return "\n".join([row, s, row])
+    logging.info("\n".join([row, s, row]))
 
 
 def assertEqual(a, b, message=None):
@@ -110,7 +110,7 @@ class ShallowNetwork:
             res = self.getOutputs(inputs)
             logging.info("%s -> %s (%s)" % (inputs, res, targets))
     def dump(self):
-        return str([self.in_layer.dump(), self.out_layer.dump()])
+        return {"ShallowNetwork": [self.in_layer.dump(), self.out_layer.dump()]}
     def __str__(self):
         return "<ShallowNetwork %s>" % str([self.in_layer, self.out_layer])
 
@@ -157,7 +157,7 @@ class DeepNetwork:
             auto_patterns = new_auto_patterns
         self._connect()
     def train(self, patterns, iterations=1000, learn=0.05):
-        self.prepare(patterns, 10+iterations/100, learn)
+        self.prepare(patterns, 20+iterations/100, learn)
         logging.info("train")
         count = iterations * len(patterns)
         step = int(math.log(iterations * len(patterns)))
@@ -186,7 +186,7 @@ class DeepNetwork:
             res[idx][is_ok] = res[idx].get(is_ok, 0) + 1
         logging.info(res)
     def dump(self):
-        return str([l.dump() for l in self.layers])
+        return {"DeepNetwork": [l.dump() for l in self.layers]}
     def __str__(self):
         return "<DeepNetwork %s>" % str(self.layers)
 
@@ -208,6 +208,7 @@ def demo():
     # test it
     print net
     net.test(patterns)
+    print net.dump()
 
 
 if __name__ == "__main__":

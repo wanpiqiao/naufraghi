@@ -125,10 +125,10 @@ cdef class Layer:
             res.append(self.outputs[k])
         return res
     def dump(self):
-        res = [self.getInputs(),
-               self.getWeights(),
-               self.getOutputs()]
-        return str(res)
+        res = dict(inputs  = self.getInputs(),
+                   weights = self.getWeights(),
+                   outputs = self.getOutputs())
+        return {"Layer": res}
     def __repr__(self):
         return "<Layer %d %d>" % (self.n_in, self.n_out)
     def __dealloc__(self):
