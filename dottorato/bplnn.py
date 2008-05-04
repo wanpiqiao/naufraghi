@@ -142,10 +142,12 @@ class DeepNetwork:
         for c, layer in enumerate(self.layers):
             if self.auto_mode == "step":
                 auto_net = ShallowNetwork(len(layer.getInputs()), len(layer.getOutputs()), len(layer.getInputs()), bias=False)
+                logging.debug("auto_net(step): %s" % auto_net)
+                auto_net.train(auto_patterns, iterations - (c * earlystop), learn)
             else:
                 auto_net = ShallowNetwork(len(layer.getInputs()), len(layer.getOutputs()), len(self.layers[0].getInputs()), bias=False)
-            logging.debug("auto_net: %s" % auto_net)
-            auto_net.train(auto_patterns, iterations - (c * earlystop), learn)
+                logging.debug("auto_net(input): %s" % auto_net)
+                auto_net.train(auto_patterns, iterations, learn)
             layer.copyWeights(auto_net.in_layer)
             new_auto_patterns = []
             for inputs, targets in auto_patterns:
@@ -158,7 +160,7 @@ class DeepNetwork:
             auto_patterns = new_auto_patterns
         self._connect()
     def train(self, patterns, iterations=1000, learn=0.05):
-        self.prepare(patterns, 20+iterations/100, learn)
+        self.prepare(patterns, iterations, learn)
         logging.info("train")
         count = iterations
         step = 10 + int(math.log(iterations))
