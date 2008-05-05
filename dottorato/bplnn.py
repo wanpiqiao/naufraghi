@@ -96,6 +96,7 @@ class ShallowNetwork:
         return self.out_layer.getOutputs()
     def train(self, patterns, iterations=1000, learn=0.05):
         for i in range(iterations):
+            random.shuffle(patterns)
             error = 0.0
             for inputs, targets in patterns:
                 self.propagate(inputs)
@@ -166,6 +167,7 @@ class DeepNetwork:
         step = 10 + int(math.log(iterations))
         err = learn/(iterations/10)
         while count > 0:
+            random.shuffle(patterns)
             count -= 1
             error = 0.0
             for inputs, targets in patterns:
