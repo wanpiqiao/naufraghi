@@ -2,7 +2,14 @@
 
 import random
 
-include "stdlib.pxd"
+cdef extern from "stdlib.h":
+    ctypedef unsigned long size_t 
+    void free(void *ptr)
+    void *malloc(size_t size)
+    void *realloc(void *ptr, size_t size)
+    size_t strlen(char *s)
+    char *strcpy(char *dest, char *src)
+    int rand()
 
 cdef extern from "math.h":
     double exp(double theta)
@@ -18,7 +25,7 @@ cdef class Sigmoid:
     cdef double error(self, double* outputs, double* targets, int num):
         cdef double _error = 0.0
         for k from 0 <= k < num:
-            _error += pow((outputs[k] - targets[k]), 2)
+            _error += pow((outputs[k] - targets[k]), 2.0)
         return 0.5 * _error
 
 cdef double dot(double* vec1, double* vec2, int num):
@@ -90,9 +97,10 @@ cdef class Layer:
     cpdef error(self):
         return self.squash.error(self.outputs, self.targets, self.n_out)
     cpdef updateWeights(self, double learn):
+        cdef double momentum = 1.0
         for j from 0 <= j < self.n_in:
             for k from 0 <= k < self.n_out:
-                self.weights[k][j] += learn * self.delta_outputs[k] * self.inputs[j]
+                self.weights[k][j] += (0.5 + (rand() % 100) / 100.0) * learn * (self.delta_outputs[k] * self.inputs[j])
     cpdef connect(self, Layer next):
         next.connected = 1
         next.inputs = self.outputs
