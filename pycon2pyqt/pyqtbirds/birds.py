@@ -9,10 +9,11 @@ from PyQt4.Qt import *
 
 SIDE = 400.0
 
-class Bird():
+class Bird:
     def __init__(self, pos, vel):
         self.pos = pos
         self.vel = vel
+        self.col = QColor(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
     def move(self, pos=None):
         if pos:
             self.pos = pos
@@ -24,6 +25,16 @@ class Bird():
     def dist(self, other):
         return math.sqrt((self.pos[0] - other.pos[0])**2 + (self.pos[1] - other.pos[1])**2)
 
+class App(QWidget):
+    def __init__(self, *args):
+        QWidget.__init__(self, *args)
+        self.main = QVBoxLayout(self)
+        self.birds = Birds(None)
+        self.main.addWidget(self.birds)
+        self.stampa = QPushButton("Stampa!" ,None)
+        self.main.addWidget(self.stampa)
+        self.connect(self.stampa, SIGNAL("clicked()"), self.birds.printMe)
+
 class Birds(QWidget):
     def __init__(self, *args):
         QWidget.__init__(self, *args)
@@ -31,13 +42,28 @@ class Birds(QWidget):
         self.timer = QTimer(self)
         self.connect(self.timer, SIGNAL("timeout()"), self.update)
         self.timer.start(30)
-        self.resize(SIDE, SIDE)
+        self.resize(self.sizeHint())
         self.birds = [Bird([0,0], [0.1,0.1]) for b in range(100)]
+        #self.setAutoFillBackground(False)
+        self.pixmap = QPixmap(SIDE, SIDE)
+        self.pixmap.fill(Qt.white)
         for i in range(100):
             for bird in self.birds:
                 bird.move()
+
+    def sizeHint(self):
+        return QSize(SIDE, SIDE)
+
+    def printMe(self):
+        printer = QPrinter()
+        d = QPrintDialog(printer)
+        if d.exec_() == QDialog.Accepted:
+            painter = QPainter(printer)
+            painter.drawPixmap(printer.paperRect(), self.pixmap, self.pixmap.rect())
+            painter.end()
+
     def paintEvent(self, e):
-        p = QPainter(self)
+        p = QPainter(self.pixmap)
         pen = QPen()
         pen.setWidth(2.0)
         p.setRenderHint(QPainter.Antialiasing)
@@ -67,17 +93,19 @@ class Birds(QWidget):
                 bird.pos[0] = bird.pos[0] - cmp(bird.pos[0],0) * SIDE
             if not -SIDE/2 < bird.pos[1] < SIDE/2:
                 bird.pos[1] = bird.pos[1] - cmp(bird.pos[1],0) * SIDE
-            if bird in leaders:
-                pen.setColor(Qt.red)
-            else:
-                pen.setColor(Qt.black)
+
+            pen.setColor(bird.col)
+
             p.setPen(pen)
             p.drawPoint(*bird.pos)
+        p.end()
 
+        p = QPainter(self)
+        p.drawPixmap(self.rect(), self.pixmap, self.pixmap.rect())
+        p.end()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    todo = Birds()
+    todo = App()
     todo.show()
     sys.exit(app.exec_())
-
