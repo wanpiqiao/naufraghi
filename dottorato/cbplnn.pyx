@@ -13,6 +13,7 @@ cdef extern from "stdlib.h":
 
 cdef extern from "math.h":
     double exp(double theta)
+    double tanh(double theta)
     double pow(double base, double exponent)
     double log(double x)
 
@@ -51,6 +52,12 @@ cdef class Linear(Squasher):
         for k from 0 <= k < num:
             _error += (outputs[k] - targets[k]) * (outputs[k] - targets[k])
         return 0.5 * _error
+
+cdef class Hyperbolic(Linear):
+    cpdef double func(self, double val):
+        return 1.7159 * tanh(val * 2.0 / 3.0) # f(1) = 1 and f(-1) = -1
+    cpdef double deriv(self, double val):
+        return 1 - pow(tanh(val * 2.0 / 3.0), 2.0)
 
 cdef class Sigmoid(Linear):
     cpdef double func(self, double val):

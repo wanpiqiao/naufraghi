@@ -9,7 +9,7 @@ import random
 
 import logging
 
-from cbplnn import Layer, Sigmoid, Linear, BinaryMultitask
+from cbplnn import *
 
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -71,7 +71,7 @@ def assertEqual(a, b, message=None):
 
 
 class ShallowNetwork:
-    def __init__(self, n_in, n_hid, n_out, squash_in=Sigmoid, squash_out=BinaryMultitask, bias=True):
+    def __init__(self, n_in, n_hid, n_out, squash_in=Hyperbolic, squash_out=Hyperbolic, bias=True):
         if bias:
             self.bias = [1.0]
         else:
@@ -204,10 +204,16 @@ def demo():
         [[1.0,0.0], [1.0]],
         [[1.0,1.0], [0.0]]
     ]
+    patterns = [
+        [[-1.0,-1.0], [-1.0]],
+        [[-1.0, 1.0], [ 1.0]],
+        [[ 1.0,-1.0], [ 1.0]],
+        [[ 1.0, 1.0], [-1.0]]
+    ]
 
     # create a network
-    #net = ShallowNetwork(2, 5, 1)
-    net = DeepNetwork([2, 3, 3, 3, 3, 1], ["step", "input"][1])
+    net = ShallowNetwork(2, 5, 1)
+    #net = DeepNetwork([2, 3, 3, 3, 3, 1], ["step", "input"][1])
     # train it with some patterns
     net.train(patterns, 10000)
     # test it
