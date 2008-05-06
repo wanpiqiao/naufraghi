@@ -5,90 +5,46 @@
 
 import os
 import sys
+import gzip
 
 from PyQt4.Qt import *
 
-pendigits = """
- 47,100, 27, 81, 57, 37, 26,  0,  0, 23, 56, 53,100, 90, 40, 98, 8
-  0, 89, 27,100, 42, 75, 29, 45, 15, 15, 37,  0, 69,  2,100,  6, 2
-  0, 57, 31, 68, 72, 90,100,100, 76, 75, 50, 51, 28, 25, 16,  0, 1
-  0,100,  7, 92,  5, 68, 19, 45, 86, 34,100, 45, 74, 23, 67,  0, 4
-  0, 67, 49, 83,100,100, 81, 80, 60, 60, 40, 40, 33, 20, 47,  0, 1
-100,100, 88, 99, 49, 74, 17, 47,  0, 16, 37,  0, 73, 16, 20, 20, 6
-  0,100,  3, 72, 26, 35, 85, 35,100, 71, 73, 97, 65, 49, 66,  0, 4
-  0, 39,  2, 62, 11,  5, 63,  0,100, 43, 89, 99, 36,100,  0, 57, 0
- 13, 89, 12, 50, 72, 38, 56,  0,  4, 17,  0, 61, 32, 94,100,100, 5
- 57,100, 22, 72,  0, 31, 25,  0, 75, 13,100, 50, 75, 87, 26, 85, 0
- 74, 87, 31,100,  0, 69, 62, 64,100, 79,100, 38, 84,  0, 18,  1, 9
- 48, 96, 62, 65, 88, 27, 21,  0, 21, 33, 79, 67,100,100,  0, 85, 8
-100,100, 72, 99, 36, 78, 34, 54, 79, 47, 64, 13, 19,  0,  0,  2, 5
- 91, 74, 54,100,  0, 87, 23, 59, 81, 67,100, 39, 79,  4, 21,  0, 9
-  0, 85, 38,100, 81, 88, 87, 50, 84, 12, 58,  0, 53, 22,100, 24, 7
- 35, 76, 57,100,100, 92, 68, 66, 81, 38, 82,  9, 32,  0,  0, 17, 3
- 50, 84, 66,100, 75, 75, 51, 51,100, 42, 97, 13, 49,  0,  0,  7, 3
- 99, 80, 63,100, 25, 76, 79, 68,100, 62, 97, 23, 54,  0,  0, 16, 9
- 24, 66, 43,100, 59, 65, 34, 28,  0,  1, 16, 11, 58,  0,100,  1, 2
-  0, 73, 19, 99, 72,100, 70, 73, 32, 48,  5, 18, 46,  0,100,  0, 2
- 12, 77, 20, 62, 78, 40, 50,  0,  1, 17,  0, 64, 23, 98,100,100, 5
-  0, 46, 49, 64, 78, 87,100,100, 91, 75, 85, 49, 75, 24, 89,  0, 1
- 10, 86, 34, 66, 68, 34, 34,  0,  4, 26,  0, 69, 34, 95,100,100, 5
- 73, 62, 53,100,  0, 72, 82, 39,100,  0, 15, 14, 52, 57, 90, 94, 8
- 54,100, 34, 75,  6, 43,  0, 11, 70,  0,100, 28, 44, 46, 36, 21, 6
- 11,100,  0, 69, 15, 43, 87, 47,100, 65, 74, 67, 71, 33, 66,  0, 4
- 36, 92,  7, 83,  0, 37, 26,  0, 77,  6,100, 46, 84, 89, 36,100, 0
- 46,100, 10, 83, 34, 64,100, 77, 71, 82, 49, 54, 22, 27,  0,  0, 4
- 61, 59, 58,100,  0, 84, 44, 42, 80,  0,  8,  5, 33, 44,100, 70, 8
-100, 84, 31,100,  0, 88,  8, 70, 15, 53, 15, 35,  0, 17,  0,  0, 1
- 32, 59, 53,100,100, 95, 79, 46, 48,  0, 93, 19, 58, 55,  0, 63, 8
- 40, 99, 51, 66, 79, 26, 39,  0,  0, 27,  8, 77, 46,100,100, 94, 5
-  0, 98, 36,100, 80, 85, 68, 42, 56,  0, 25, 23, 50, 37,100, 32, 7
- 27, 76,  1, 42, 16,  0, 70,  3,100, 40, 92, 84, 44,100,  0, 73, 0
-  0,  0, 31, 15, 63, 30, 88, 52,100, 79, 82,100, 56, 82, 79, 64, 9
- 30, 86, 67,100, 77, 77, 53, 50, 78, 40,100, 17, 56,  0,  0,  5, 3
- 29, 91, 14, 57, 66, 39, 30,  0,  0, 19,  3, 72, 39, 97,100,100, 5
- 77, 97, 40,100,  0, 59,  9, 29, 84, 33,100, 64, 77, 44, 48,  0, 4
- 64, 93,  0, 67, 97, 67, 89,100, 14, 70,100, 68, 96, 36, 28,  0, 9
-  9, 93, 53,100, 89, 80, 57, 52, 17, 30,  0,  5, 50,  2,100,  0, 2
-  0, 93, 62,100,100, 78, 69, 43, 50,  5, 35,  0, 15, 35, 86, 37, 7
- 30, 87, 16, 55, 68, 41, 52,  0,  0, 16, 15, 63, 41,100,100, 98, 5
- 60,100, 20, 76,  0, 39, 10,  1, 69,  0,100, 33, 56, 40, 15, 10, 6
-  0, 83, 29,100, 88, 95, 64, 69, 73, 43,100, 13, 50,  1, 10,  0, 3
-  5, 90, 46, 98, 89,100,100, 81, 77, 59, 62, 34, 37, 14,  0,  0, 3
-100, 99, 67,100, 24, 68,  0, 32, 27,  0, 99,  8, 77, 40,  9, 55, 6
- 47, 86, 73,100, 89, 75, 68, 49,100, 28, 82,  4, 38,  0,  0, 13, 3
-"""
 
-class PenDigit(QWidget):
+class USPS(QWidget):
     def __init__(self, *args):
         QWidget.__init__(self, *args)
         self.resize(100, 100)
-        self.poly = []
+        self.image = QImage(16, 16, QImage.Format_RGB32)
     def sizeHint(self):
         return QSize(100, 100)
     def updatePoly(self, data):
-        points = zip(data[0::2], data[1::2])
-        print "points:", points
-        self.poly = [QPoint(x, 100-y) for (x,y) in points]
+        picture = [data[16*i:16*(i+1)] for i in range(16)]
+        print "picture:", len(picture), len(picture[0])
+        for y, row in enumerate(picture):
+            for x, pixel in enumerate(row):
+                gray = [255 - int((1 + pixel) * 127)]*3 # pixel is [0, 2]
+                print gray[0],
+                self.image.setPixel(x, y, qRgb(*gray))
+            print
         self.update()
     def paintEvent(self, e):
         p = QPainter(self)
-        pen = QPen()
-        pen.setWidth(2.0)
         p.setRenderHint(QPainter.Antialiasing)
         #p.translate(self.width() / 2, self.height() / 2)
-        #side = min(self.width(), self.height())
-        #p.scale(side / 100, side / 100)
-        lines = zip(self.poly[:-1], self.poly[1:])
-        for p1, p2 in lines:
-            p.drawLine(p1, p2)
+        side = min(self.width(), self.height())
+        p.scale(side / 16, side / 16)
+        p.drawImage(self.image.rect(), self.image, self.rect())
+
+
 
 class DatasetViewer(QWidget):
     def __init__(self, data, *args):
         QWidget.__init__(self, *args)
         main = QVBoxLayout(self)
         self.text = QTextEdit(None)
+        self.text.setLineWrapMode(QTextEdit.NoWrap)
         main.addWidget(self.text)
-        self.digit = PenDigit(None)
+        self.digit = USPS(None)
         main.addWidget(self.digit)
         self.connect(self.text, SIGNAL("cursorPositionChanged()"), self.updateDigit)
         self.text.setPlainText(data.strip())
@@ -96,12 +52,13 @@ class DatasetViewer(QWidget):
     def updateDigit(self):
         row = str(self.text.textCursor().block().text()).strip()
         if row:
-            row = map(int, row.split(","))[:-1]
+            row = map(float, row.split(" "))[1:]
             self.digit.updatePoly(row)
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    todo = DatasetViewer(pendigits)
+    data = "".join(gzip.open("zip.train.gz").readlines()[:100])
+    todo = DatasetViewer(data)
     todo.show()
     sys.exit(app.exec_())
