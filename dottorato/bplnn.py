@@ -9,7 +9,7 @@ import random
 
 import logging
 
-from cbplnn import Layer
+from cbplnn import Layer, Sigmoid, Linear, BinaryMultitask
 
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -71,15 +71,15 @@ def assertEqual(a, b, message=None):
 
 
 class ShallowNetwork:
-    def __init__(self, n_in, n_hid, n_out, bias=True):
+    def __init__(self, n_in, n_hid, n_out, squash_in=Sigmoid, squash_out=BinaryMultitask, bias=True):
         if bias:
             self.bias = [1.0]
         else:
             self.bias = []
         n_in = n_in + len(self.bias)
         random.seed(123)
-        self.in_layer = Layer(n_in, n_hid)
-        self.out_layer = Layer(n_hid, n_out)
+        self.in_layer = Layer(n_in, n_hid, squash_in)
+        self.out_layer = Layer(n_hid, n_out, squash_out)
         self.in_layer.connect(self.out_layer)
     def propagate(self, inputs):
         self.in_layer.propagate(inputs + self.bias)

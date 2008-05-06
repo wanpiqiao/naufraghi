@@ -29,7 +29,17 @@ cdef double* softmax(double* outputs, double* targets, int num):
         prob[k] = exp(outputs[k] - _max) / den
     return prob
 
-cdef class Linear:
+cdef class Squasher:
+    cpdef double func(self, double val):
+        return 0.0
+    cpdef double deriv(self, double val):
+        return 1.0
+    cpdef double derror(self, double output, double target):
+        return 0.0
+    cdef double error(self, double* outputs, double* targets, int num):
+        return 0.0
+
+cdef class Linear(Squasher):
     cpdef double func(self, double val):
         return val
     cpdef double deriv(self, double val):
@@ -78,9 +88,9 @@ cdef class Layer:
     cdef double* outputs
     cdef double* delta_outputs
     cdef double* targets
-    cdef BinaryMultitask squash
+    cdef Squasher squash
     cdef int connected
-    def __new__(self, int n_in, int n_out):
+    def __new__(self, int n_in, int n_out, squasher=Sigmoid):
         self.n_in = n_in
         self.n_out = n_out
         self.inputs = <double *>malloc(n_in * sizeof(double))
@@ -91,7 +101,7 @@ cdef class Layer:
         self.outputs = <double *>malloc(n_out * sizeof(double))
         self.delta_outputs = <double *>malloc(n_out * sizeof(double))
         self.targets = <double *>malloc(n_out * sizeof(double))
-        self.squash = BinaryMultitask()
+        self.squash = squasher()
         self._init_values()
         self.connected = 0
     cdef _init_values(self):
