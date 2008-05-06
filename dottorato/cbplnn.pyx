@@ -14,19 +14,48 @@ cdef extern from "stdlib.h":
 cdef extern from "math.h":
     double exp(double theta)
     double pow(double base, double exponent)
+    double log(double x)
 
-cdef class Sigmoid:
+cdef double* softmax(double* outputs, double* targets, int num):
+    cdef double* prob = <double *>malloc(num * sizeof(double))
+    cdef double _max = 0.0
+    for k from 0 <= k < num: # use max(outputs) to avoid overflow
+        if outputs[k] > _max:
+            _max = outputs[k]
+    cdef double den = 0.0
+    for k from 0 <= k < num:
+        den += exp(outputs[k] - _max)
+    for k from 0 <= k < num:
+        prob[k] = exp(outputs[k] - _max) / den
+    return prob
+
+cdef class Linear:
     cpdef double func(self, double val):
-        return 1.0 / (1.0 + exp(-val))
+        return val
     cpdef double deriv(self, double val):
-        return val * (1.0 - val)
-    cpdef double loss(self, double output, double target):
+        return 1.0
+    cpdef double derror(self, double output, double target):
         return self.deriv(output) * (target - output)
     cdef double error(self, double* outputs, double* targets, int num):
         cdef double _error = 0.0
         for k from 0 <= k < num:
-            _error += pow((outputs[k] - targets[k]), 2.0)
+            _error += (outputs[k] - targets[k]) * (outputs[k] - targets[k])
         return 0.5 * _error
+
+cdef class Sigmoid(Linear):
+    cpdef double func(self, double val):
+        return 1.0 / (1.0 + exp(-val))
+    cpdef double deriv(self, double val):
+        return val * (1.0 - val)
+
+cdef class BinaryMultitask(Sigmoid):
+    cpdef double derror(self, double output, double target):
+        return (target - output)
+    cdef double error(self, double* outputs, double* targets, int num):
+        cdef double _error = 0.0
+        for k from 0 <= k < num:
+            _error += targets[k]*log(outputs[k]) + (1 - targets[k])*log(1 - outputs[k])
+        return - _error
 
 cdef double dot(double* vec1, double* vec2, int num):
     cdef double _sum = 0.0
@@ -49,7 +78,7 @@ cdef class Layer:
     cdef double* outputs
     cdef double* delta_outputs
     cdef double* targets
-    cdef Sigmoid squash
+    cdef BinaryMultitask squash
     cdef int connected
     def __new__(self, int n_in, int n_out):
         self.n_in = n_in
@@ -62,7 +91,7 @@ cdef class Layer:
         self.outputs = <double *>malloc(n_out * sizeof(double))
         self.delta_outputs = <double *>malloc(n_out * sizeof(double))
         self.targets = <double *>malloc(n_out * sizeof(double))
-        self.squash = Sigmoid()
+        self.squash = BinaryMultitask()
         self._init_values()
         self.connected = 0
     cdef _init_values(self):
@@ -87,7 +116,7 @@ cdef class Layer:
         if targets != None:
             for k from 0 <= k < self.n_out:
                 self.targets[k] = targets[k]
-                self.delta_outputs[k] = self.squash.loss(self.outputs[k], self.targets[k])
+                self.delta_outputs[k] = self.squash.derror(self.outputs[k], self.targets[k])
         self._backPropagate()
         if targets != None:
             return self.error()
