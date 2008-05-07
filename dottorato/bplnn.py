@@ -106,10 +106,24 @@ class ShallowNetwork:
                 logging.debug("iter(%s) error = %f" % (iterations - i, error))
             if error < learn:
                 break
-    def test(self, patterns):
+    def _test(self, patterns):
         for inputs, targets in patterns:
             res = self.getOutputs(inputs)
             logging.info("%s -> %s (%s)" % (inputs, res, targets))
+    def test(self, patterns):
+        def getId(targets):
+            if len(targets) > 1:
+                return targets.index(max(targets))
+            else:
+                return targets[0] > 0.5 # only Sigmoid...
+        res = {}
+        for inputs, targets in patterns:
+            outputs = self.getOutputs(inputs)
+            idx = getId(targets)
+            res.setdefault(idx, {True: 0.0, False: 0.0, "err": None})
+            res[idx][idx == getId(outputs)] += 1.0
+            res[idx]["err"] = res[idx][False] / (res[idx][True] + res[idx][False])
+        logging.info(res)
     def dump(self):
         return {"ShallowNetwork": [self.in_layer.dump(), self.out_layer.dump()]}
     def __str__(self):
@@ -180,15 +194,18 @@ class DeepNetwork:
                 break
     def test(self, patterns):
         def getId(targets):
-            return targets.index(max(targets))
+            if len(targets) > 1:
+                return targets.index(max(targets))
+            else:
+                return targets[0] > 0.5 # only Sigmoid...
         res = {}
         for inputs, targets in patterns:
             self.propagate(inputs + [1.0])
             outputs = self.layers[-1].getOutputs()
             idx = getId(targets)
-            res.setdefault(idx, {})
-            is_ok = (idx == getId(outputs))
-            res[idx][is_ok] = res[idx].get(is_ok, 0) + 1
+            res.setdefault(idx, {True: 0.0, False: 0.0, "err": None})
+            res[idx][idx == getId(outputs)] += 1.0
+            res[idx]["err"] = res[idx][False] / (res[idx][True] + res[idx][False])
         logging.info(res)
     def dump(self):
         return {"DeepNetwork": [l.dump() for l in self.layers]}
@@ -217,9 +234,9 @@ def demo():
     # train it with some patterns
     net.train(patterns, 10000)
     # test it
+    print net.dump()
     print net
     net.test(patterns)
-    print net.dump()
 
 
 if __name__ == "__main__":
