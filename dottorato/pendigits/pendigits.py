@@ -31,8 +31,8 @@ def run():
     patterns = load_data("pendigits.tra")
     n_in = len(patterns[0][0])
     n_out = len(patterns[0][1])
-    net = DeepNetwork([n_in, n_in/2, n_in/4, n_out], auto_mode="input")
-    net.train(patterns, 1000)
+    net = DeepNetwork([n_in, (n_in+n_out)/2, n_out], auto_mode="input")
+    net.prepare(patterns, 1000, 0.05)
     print net.dump()
     print net
     test_patterns = load_data("pendigits.tes")
