@@ -11,7 +11,8 @@ def sigmoid():
     0.62245933120185459
     >>> sig.deriv(0.5)
     0.25
-    >>> sig.derror(2.0, 2.5)
+    >>> ce = nn.CrossEntropy()
+    >>> ce.deriv(2.0, 2.5)
     -1.0
     """
 
