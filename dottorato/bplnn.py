@@ -180,7 +180,7 @@ class DeepNetwork:
             auto_patterns = new_auto_patterns
         self._connect()
     def train(self, patterns, iterations=1000, learn=0.05):
-        self.prepare(patterns, iterations, learn)
+        #self.prepare(patterns, iterations, learn)
         logging.info("train")
         count = iterations
         step = 10 + int(math.log(iterations))
@@ -236,13 +236,15 @@ def demo():
 
     # create a network
     #net = ShallowNetwork(2, 5, 1)
-    net = DeepNetwork([2, 2, 1], ["step", "input"][0])
+    net = DeepNetwork([2, 3, 1], ["step", "input"][1])
     # train it with some patterns
-    for i in range(2):
-        net.prepare(patterns, 100000, 0.05)
+    for i in range(1):
+        net.prepare(patterns, 10000, 0.05)
     # test it
-    print net.dump()
+    #print net.dump()
+    net.test(patterns)
     print net
+    net.train(patterns, 50000)
     net.test(patterns)
 
 

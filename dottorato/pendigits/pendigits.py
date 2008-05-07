@@ -31,12 +31,15 @@ def run():
     patterns = load_data("pendigits.tra")
     n_in = len(patterns[0][0])
     n_out = len(patterns[0][1])
-    net = DeepNetwork([n_in, (n_in+n_out)/2, n_out], auto_mode="step")
-    for i in range(10):
+    net = DeepNetwork([n_in, (n_in+n_out)/2, n_out], auto_mode="input")
+    for i in range(1):
         net.prepare(patterns, 1000, 0.05)
     #print net.dump()
     print net
     test_patterns = load_data("pendigits.tes")
+    net.test(test_patterns)
+    print "!"*20, "auto test", "!"*20
+    net.train(patterns, 10000)
     net.test(test_patterns)
 
 
