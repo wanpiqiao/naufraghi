@@ -71,15 +71,15 @@ def assertEqual(a, b, message=None):
 
 
 class ShallowNetwork:
-    def __init__(self, n_in, n_hid, n_out, squash_in=Hyperbolic, squash_out=Hyperbolic, bias=True):
+    def __init__(self, n_in, n_hid, n_out, loss=CrossEntropy, bias=True):
         if bias:
             self.bias = [1.0]
         else:
             self.bias = []
         n_in = n_in + len(self.bias)
         random.seed(123)
-        self.in_layer = Layer(n_in, n_hid, squash_in)
-        self.out_layer = Layer(n_hid, n_out, squash_out)
+        self.in_layer = Layer(n_in, n_hid)
+        self.out_layer = Layer(n_hid, n_out, loss)
         self.in_layer.connect(self.out_layer)
     def propagate(self, inputs):
         self.in_layer.propagate(inputs + self.bias)
@@ -204,7 +204,7 @@ def demo():
         [[1.0,0.0], [1.0]],
         [[1.0,1.0], [0.0]]
     ]
-    patterns = [
+    _patterns = [
         [[-1.0,-1.0], [-1.0]],
         [[-1.0, 1.0], [ 1.0]],
         [[ 1.0,-1.0], [ 1.0]],

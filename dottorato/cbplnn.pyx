@@ -17,6 +17,33 @@ cdef extern from "math.h":
     double pow(double base, double exponent)
     double log(double x)
 
+# Squash functions ######################################
+
+cdef class Squasher:
+    cpdef double func(self, double val):
+        return 0.0
+    cpdef double deriv(self, double val):
+        return 1.0
+
+cdef class Linear(Squasher):
+    cpdef double func(self, double val):
+        return val
+    cpdef double deriv(self, double val):
+        return 1.0
+
+cdef class Hyperbolic(Squasher):
+    cpdef double unc(self, double val):
+        return 1.7159 * tanh(val * 2.0 / 3.0) # f(1) = 1 and f(-1) = -1
+    cpdef double deriv(self, double val):
+        return 1 - pow(tanh(val * 2.0 / 3.0), 2.0)
+
+cdef class Sigmoid(Squasher):
+    cpdef double func(self, double val):
+        return 1.0 / (1.0 + exp(-val))
+    cpdef double deriv(self, double val):
+        return val * (1.0 - val)
+
+# FIXME, find an interface to integrate the softmax actiovation
 cdef double* softmax(double* outputs, double* targets, int num):
     cdef double* prob = <double *>malloc(num * sizeof(double))
     cdef double _max = 0.0
@@ -30,49 +57,41 @@ cdef double* softmax(double* outputs, double* targets, int num):
         prob[k] = exp(outputs[k] - _max) / den
     return prob
 
-cdef class Squasher:
-    cpdef double func(self, double val):
-        return 0.0
-    cpdef double deriv(self, double val):
-        return 1.0
-    cpdef double derror(self, double output, double target):
+# Loss functions #######################################
+# 5.2 PRML Bishop
+
+cdef class Loss:
+    cdef Squasher squash
+    def __init__(self, squash):
+        self.squash = squash()
+    cpdef double deriv(self, double output, double target):
         return 0.0
     cdef double error(self, double* outputs, double* targets, int num):
         return 0.0
 
-cdef class Linear(Squasher):
-    cpdef double func(self, double val):
-        return val
-    cpdef double deriv(self, double val):
-        return 1.0
-    cpdef double derror(self, double output, double target):
-        return self.deriv(output) * (target - output)
+cdef class SumOfSquares(Loss):
+    def __init__(self, squash=Linear):
+        Loss.__init__(self, squash)
+    cpdef double deriv(self, double output, double target):
+        return self.squash.deriv(output) * (target - output)
     cdef double error(self, double* outputs, double* targets, int num):
         cdef double _error = 0.0
         for k from 0 <= k < num:
             _error += (outputs[k] - targets[k]) * (outputs[k] - targets[k])
         return 0.5 * _error
 
-cdef class Hyperbolic(Linear):
-    cpdef double func(self, double val):
-        return 1.7159 * tanh(val * 2.0 / 3.0) # f(1) = 1 and f(-1) = -1
-    cpdef double deriv(self, double val):
-        return 1 - pow(tanh(val * 2.0 / 3.0), 2.0)
-
-cdef class Sigmoid(Linear):
-    cpdef double func(self, double val):
-        return 1.0 / (1.0 + exp(-val))
-    cpdef double deriv(self, double val):
-        return val * (1.0 - val)
-
-cdef class BinaryMultitask(Sigmoid):
-    cpdef double derror(self, double output, double target):
-        return (target - output)
+cdef class CrossEntropy(Loss):
+    def __init__(self, squash=Sigmoid):
+        Loss.__init__(self, squash)
+    cpdef double deriv(self, double output, double target):
+        return self.squash.deriv(output) * (target - output)
     cdef double error(self, double* outputs, double* targets, int num):
         cdef double _error = 0.0
         for k from 0 <= k < num:
-            _error += targets[k]*log(outputs[k]) + (1 - targets[k])*log(1 - outputs[k])
+            _error += targets[k]*log(outputs[k]) + (1.0 - targets[k])*log(1.0 - outputs[k])
         return - _error
+
+# Matrix / Vector functions #######################################
 
 cdef double dot(double* vec1, double* vec2, int num):
     cdef double _sum = 0.0
@@ -86,6 +105,8 @@ cdef double dot_t(double** matrix, int j, double* vec, int num):
         _sum += matrix[k][j] * vec[k]
     return _sum
 
+# Layer class #####################################################
+
 cdef class Layer:
     cdef int n_in
     cdef int n_out
@@ -95,9 +116,9 @@ cdef class Layer:
     cdef double* outputs
     cdef double* delta_outputs
     cdef double* targets
-    cdef Squasher squash
+    cdef Loss loss
     cdef int connected
-    def __new__(self, int n_in, int n_out, squasher=Sigmoid):
+    def __new__(self, int n_in, int n_out, loss=CrossEntropy, squash=None):
         self.n_in = n_in
         self.n_out = n_out
         self.inputs = <double *>malloc(n_in * sizeof(double))
@@ -108,7 +129,10 @@ cdef class Layer:
         self.outputs = <double *>malloc(n_out * sizeof(double))
         self.delta_outputs = <double *>malloc(n_out * sizeof(double))
         self.targets = <double *>malloc(n_out * sizeof(double))
-        self.squash = squasher()
+        if not squash:
+            self.loss = loss()
+        else:
+            self.loss = loss(squash)
         self._init_values()
         self.connected = 0
     cdef _init_values(self):
@@ -128,20 +152,20 @@ cdef class Layer:
         self._propagate()
     cdef _propagate(self):
         for k from 0 <= k < self.n_out:
-            self.outputs[k] = self.squash.func(dot(self.weights[k], self.inputs, self.n_in))
+            self.outputs[k] = self.loss.squash.func(dot(self.weights[k], self.inputs, self.n_in))
     def backPropagate(self, targets=None):
         if targets != None:
             for k from 0 <= k < self.n_out:
                 self.targets[k] = targets[k]
-                self.delta_outputs[k] = self.squash.derror(self.outputs[k], self.targets[k])
+                self.delta_outputs[k] = self.loss.deriv(self.outputs[k], self.targets[k])
         self._backPropagate()
         if targets != None:
             return self.error()
     cdef _backPropagate(self):
         for j from 0 <= j < self.n_in:
-            self.delta_inputs[j] = self.squash.deriv(self.inputs[j]) * dot_t(self.weights, j, self.delta_outputs, self.n_out)
+            self.delta_inputs[j] = self.loss.squash.deriv(self.inputs[j]) * dot_t(self.weights, j, self.delta_outputs, self.n_out)
     cpdef error(self):
-        return self.squash.error(self.outputs, self.targets, self.n_out)
+        return self.loss.error(self.outputs, self.targets, self.n_out)
     cpdef updateWeights(self, double learn):
         cdef double momentum = 1.0
         for j from 0 <= j < self.n_in:
