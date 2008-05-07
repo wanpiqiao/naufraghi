@@ -5,7 +5,7 @@
 import os
 import sys
 
-os.chdir(os.path.dirname(__file__))
+os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
 sys.path.append("../")
 
@@ -31,9 +31,10 @@ def run():
     patterns = load_data("pendigits.tra")
     n_in = len(patterns[0][0])
     n_out = len(patterns[0][1])
-    net = DeepNetwork([n_in, (n_in+n_out)/2, n_out], auto_mode="input")
-    net.prepare(patterns, 1000, 0.05)
-    print net.dump()
+    net = DeepNetwork([n_in, (n_in+n_out)/2, n_out], auto_mode="step")
+    for i in range(10):
+        net.prepare(patterns, 1000, 0.05)
+    #print net.dump()
     print net
     test_patterns = load_data("pendigits.tes")
     net.test(test_patterns)

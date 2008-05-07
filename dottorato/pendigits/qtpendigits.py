@@ -8,6 +8,7 @@ import sys
 
 from PyQt4.Qt import *
 
+os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
 class PenDigit(QWidget):
     def __init__(self, *args):

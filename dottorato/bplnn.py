@@ -132,36 +132,27 @@ class ShallowNetwork:
 
 class DeepNetwork:
     def __init__(self, n_nodes, auto_mode="step"):
-        """
-        Build a symmetric deep network
-        """
         n_nodes[0] += 1 # bias
-        sizes = zip(n_nodes[:-1], n_nodes[1:]) + zip(n_nodes[1:], n_nodes[:-1])[::-1]
-        self.middle = len(n_nodes) - 2
-        self.layers = [Layer(n_in, n_out) for n_in, n_out in sizes]
-        assertEqual(len(self.layers[self.middle].getOutputs()), n_nodes[-1])
+        self.layers = [Layer(n_in, n_out) for n_in, n_out in zip(n_nodes[:-1], n_nodes[1:])]
         self.auto_mode = auto_mode
     def _connect(self):
         for i in range(len(self.layers)-1):
             self.layers[i].connect(self.layers[i+1])
     def propagate(self, inputs):
-        """
-        Propagate inputs till the middle (till the feature extractor)
-        """
         self.layers[0].propagate(inputs)
-        for layer in self.layers[1:self.middle + 1]:
+        for layer in self.layers[1:]:
             layer.propagate()
     def backPropagate(self, targets):
-        err = self.layers[self.middle].backPropagate(targets)
-        for layer in reversed(self.layers[:self.middle]):
+        err = self.layers[-1].backPropagate(targets)
+        for layer in reversed(self.layers[:-1]):
             layer.backPropagate()
         return err
     def updateWeights(self, learn):
-        for layer in self.layers[:self.middle + 1]:
+        for layer in self.layers:
             layer.updateWeights(learn)
     def getOutputs(self, inputs):
         self.propagate(inputs)
-        return self.layers[self.middle].getOutputs()
+        return self.layers[-1].getOutputs()
     def prepare(self, patterns, iterations, learn):
         auto_patterns = [(inputs + [1.0], inputs + [1.0]) for inputs, targets in patterns]
         logging.info("prepare")
@@ -245,10 +236,10 @@ def demo():
 
     # create a network
     #net = ShallowNetwork(2, 5, 1)
-    net = DeepNetwork([2, 2, 1], ["step", "input"][1])
+    net = DeepNetwork([2, 2, 1], ["step", "input"][0])
     # train it with some patterns
-    for i in range(100):
-        net.prepare(patterns, 1000, 0.05)
+    for i in range(2):
+        net.prepare(patterns, 100000, 0.05)
     # test it
     print net.dump()
     print net

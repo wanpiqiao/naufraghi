@@ -9,6 +9,7 @@ import gzip
 
 from PyQt4.Qt import *
 
+os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
 class USPS(QWidget):
     def __init__(self, *args):
@@ -23,7 +24,7 @@ class USPS(QWidget):
         for y, row in enumerate(picture):
             for x, pixel in enumerate(row):
                 gray = [255 - int((1 + pixel) * 127)]*3 # pixel is [0, 2]
-                print gray[0],
+                print "%3d" % gray[0],
                 self.image.setPixel(x, y, qRgb(*gray))
             print
         self.update()
