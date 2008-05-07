@@ -93,6 +93,31 @@ cdef class CrossEntropy(Loss):
 
 # Matrix / Vector functions #######################################
 
+cdef class Vector:
+    cdef int size
+    cdef double* data
+    def __new__(self, array):
+        self.size = len(array)
+        self.data = <double *>malloc(self.size * sizeof(double))
+        for i, val in enumerate(array):
+            self.data[i] = val
+    cdef double get(self, int idx):
+        return self.data[idx]
+    cdef set(self, int idx, double val):
+        self.data[idx] = val
+    def __getitem__(self, int idx):
+        assert 0 <= idx < self.size, "Index Error: %d" % idx
+        return self.data[idx]
+    def __setitem__(self, int idx, double val):
+        assert 0 <= idx < self.size, "Index Error: %d" % idx
+        self.data[idx] = val
+    def __len__(self):
+        return self.size
+    def __repr__(self):
+        return "Vector(%s)" % [self.data[i] for i in range(self.size)]
+    def __dealloc__(self):
+        free(self.data)
+
 cdef double dot(double* vec1, double* vec2, int num):
     cdef double _sum = 0.0
     for i from 0 <= i < num:
