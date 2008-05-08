@@ -14,6 +14,7 @@ class UnicodePDFDemo(QWidget):
 
         self.l = QLabel(self.trUtf8("Qt (툴킷)"))
         self.te = QTextEdit(None)
+        self.te.setPlainText(self.trUtf8("인쇄!"))
         self.pb = QPushButton(self.trUtf8("인쇄!"))
         self.vl.addWidget(self.l)
         self.vl.addWidget(self.te)
@@ -30,7 +31,8 @@ class UnicodePDFDemo(QWidget):
         dialog = QPrintDialog(printer)
         if dialog.exec_() == QDialog.Accepted:
             painter = QPainter(printer)
-            painter.drawPixmap(pixmap.rect(), pixmap, pixmap.rect())
+            painter.drawText(20, 20, self.te.toPlainText())
+            #painter.drawPixmap(pixmap.rect(), pixmap, pixmap.rect())
             painter.end()
 
 if __name__ == "__main__":
