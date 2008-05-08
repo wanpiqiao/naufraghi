@@ -23,21 +23,15 @@ class UnicodePDFDemo(QWidget):
 
     def doPrint(self):
         print self.trUtf8("인쇄!").toUtf8()
+        pixmap = QPixmap(self.size())
+        self.render(pixmap)
 
         printer = QPrinter()
-        dialog = QPrintDialog(printer, self)
-        dialog.setWindowTitle("print...")
-        if dialog.exec_() != QDialog.Accepted:
-            return
-
-        #self.te.print_(printer)
-        
-        # Tests for printing the whole widget
-        self.render(printer)
-
-        im = QImage(self.size(), QImage.Format_ARGB32)
-        self.render(im)
-        im.save("prova.png")
+        dialog = QPrintDialog(printer)
+        if dialog.exec_() == QDialog.Accepted:
+            painter = QPainter(printer)
+            painter.drawPixmap(pixmap.rect(), pixmap, pixmap.rect())
+            painter.end()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
