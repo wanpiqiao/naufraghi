@@ -6,7 +6,7 @@ from PyQt4.Qt import *
 
 class DDTextEdit(QTextEdit):
     def __init__(self, *args):
-        super(DDTextEdit, self).__init__(*args)
+        QTextEdit.__init__(self, *args)
         self.setAcceptDrops(True)
         self.setReadOnly(True)
 
@@ -19,14 +19,14 @@ class DDTextEdit(QTextEdit):
 
     def dropEvent(self, event):
         event.acceptProposedAction()
-        
+
         # L'evento di drop contiene le informazioni a proposito dell'oggetto
         if event.mimeData().hasUrls():
             self.setText('\n'.join([unicode(url.toLocalFile()) for url in event.mimeData().urls()]))
 
 class DedDemo(QWidget):
     def __init__(self, *args):
-        super(DedDemo, self).__init__(*args)
+        QWidget.__init__(self, *args)
 
         self.setWindowTitle(self.tr("D&D Demo"))
         
