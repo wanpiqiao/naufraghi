@@ -109,3 +109,4 @@ if __name__ == "__main__":
     todo = App()
     todo.show()
     sys.exit(app.exec_())
+
