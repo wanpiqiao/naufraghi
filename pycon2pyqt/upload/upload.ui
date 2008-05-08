@@ -25,7 +25,7 @@
      <item>
       <widget class="QLineEdit" name="ledit_ftp" >
        <property name="text" >
-        <string>user@10.3.3.187</string>
+        <string>user@localhost</string>
        </property>
       </widget>
      </item>
