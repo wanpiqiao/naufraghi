@@ -1,0 +1,8 @@
+
+QPushButton {
+   background: green;
+}
+
+QPushButton:pressed {
+   background: red;
+}
