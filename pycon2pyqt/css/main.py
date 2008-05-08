@@ -12,6 +12,7 @@ class SimpleForm(QDialog):
     def __init__(self, *args):
         QDialog.__init__(self, *args)
         uic.loadUi("simpleform.ui", self)
+        self.lineEdit.setText("Foobar")
     
 if __name__ == "__main__":
     app = QApplication(sys.argv)
