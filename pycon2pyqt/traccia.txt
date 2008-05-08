@@ -1,0 +1,61 @@
+= Introduzione a PyQt =
+
+ * Qt (framework, desktop applications, etc...)
+ * SIP generazione wrapper API Python C (gestione lifetime oggetti Qt...)
+ * Comunità attiva (Qt Trolltech Nokia business etc... Phil Thompson attivo)
+ * Licenza PyQt analoga a quella di Qt (Commercial / Open Source / Academic-Educational)
+
+= Hello World =
+
+ * Chiacchiera namespace
+ * Widget top-level
+ * Relazione parent/child QObject e QWidget
+ * Argomenti a QApplication (name clash occhio)
+ * Panoramica layout (vari tipi, gerarchici, forse esempio)
+
+= Todo =
+
+ * Cosa fare per PyCon? Facciamo una todo list (in tutti i sensi)
+ * Build/Fill/Connect
+ * Signal/Slot per spiegare la connect
+ * Sistema di eventi
+  - Event vs. signal = low level vs. high level
+ * QSettings
+  - Dizionario, cross-platform
+ * QTranslator
+  - giro completo pylupdate -> linguist -> lrelease -> ...
+  - euristiche del linguist
+  - traduzione incrementale
+
+= UniPDF =
+
+ * Supporto i18n tutto tondo
+  - QString unicode internamente
+  - Ricerca font per glifi
+  - Trasparente programmatore
+ * Qt Painting System
+  - QPainter / QPaintEngine / QPaintDevice
+  - Astrazione a manetta, perché solo un testo e non un widget?
+
+= Style sheets =
+
+ * Cogliamo l'occasione per far vedere il designer
+ * Che giro fanno le stringhe del designer per il linguist?
+ * Fogli di stile: cambiare aspetto all'applicazione cross-platform
+ * Desktop/embedded con fogli di stile
+
+= Drag and Drop =
+
+ * Panoramica (con Assistant)
+
+= Upload =
+
+ * D&D concreto
+ * Composizione di widget tramite emit
+ * Uso del modulo ftplib
+ * Uso di QClipboard
+
+= OpenGL =
+
+ * QGLWidget, uso dei comandi diretti opengl
+
