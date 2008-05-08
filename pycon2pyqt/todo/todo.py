@@ -6,7 +6,7 @@ from PyQt4.Qt import *
 
 class Todo(QWidget):
     def __init__(self, *args):
-        super(Todo, self).__init__(*args)
+        QWidget.__init__(self, *args)
         self.setWindowTitle(self.tr("PyConDue"))
         self.settings = QSettings(QSettings.IniFormat, QSettings.UserScope, "PyConDue", "ToDo", self)
 
@@ -27,7 +27,7 @@ class Todo(QWidget):
         QObject.connect(self.le, SIGNAL("returnPressed()"), self.le.clear)
 
         QObject.connect(self.lv, SIGNAL("doubleClicked(const QModelIndex &)"), self.edit)
-        
+
     def insert(self):
         self.lm.insertRows(0, 1)
         self.lm.setData(self.lm.index(0), QVariant(self.le.text()), Qt.DisplayRole)
@@ -45,10 +45,13 @@ class Todo(QWidget):
         self.settings.clear()
         for i, item in enumerate(self.lm.stringList()):
             self.settings.setValue(u"todo/%d" % (i,), QVariant(item))
-            
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    #translator = QTranslator()
+    #translator.load("todo-en.qm")
+    #app.installTranslator(translator)
     todo = Todo()
     todo.show()
     sys.exit(app.exec_())
+
