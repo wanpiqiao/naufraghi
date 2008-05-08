@@ -6,23 +6,20 @@ from PyQt4.Qt import *
 
 class Number(QLabel):
     def __init__(self, *args):
-        super(Number, self).__init__(*args)
+        QLabel.__init__(self, *args)
         self.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
     def sizeHint(self):
         return QSize(40, 40)
 
 class Grid(QGridLayout):
     def __init__(self, *args):
-        super(Grid, self).__init__(*args)
+        QGridLayout.__init__(self, *args)
         self.setSpacing(0)
-    def heightForWidth(self, w):
-        return w
-    def hasHeightForWidth(self):
-        return True
 
 class Sudoku(QWidget):
     def __init__(self, *args):
-        super(Sudoku, self).__init__(*args)
+        QWidget.__init__(self, *args)
+        self.side = min(self.height(), self.width())
         self.setWindowTitle(self.tr("Sudoku"))
 
         # Build the view
@@ -39,7 +36,14 @@ class Sudoku(QWidget):
                     ss += "border-top: 2px solid black;"
                 l.setStyleSheet(ss)
                 self.grid.addWidget(l, i, j)
-            
+    def resizeEvent(self, e, skip=[False]):
+        skip[0] = not skip[0]
+        self.side = min(self.height(), self.width())
+        if not skip[0]: self.resize(self.sizeHint())
+        QWidget.resizeEvent(self, e)
+    def sizeHint(self):
+        return QSize(self.side, self.side)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
