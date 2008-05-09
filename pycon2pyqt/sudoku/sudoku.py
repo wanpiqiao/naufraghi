@@ -19,7 +19,7 @@ class Grid(QGridLayout):
 class Sudoku(QWidget):
     def __init__(self, *args):
         QWidget.__init__(self, *args)
-        self.side = min(self.height(), self.width())
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.setWindowTitle(self.tr("Sudoku"))
 
         # Build the view
@@ -36,13 +36,10 @@ class Sudoku(QWidget):
                     ss += "border-top: 2px solid black;"
                 l.setStyleSheet(ss)
                 self.grid.addWidget(l, i, j)
-    def resizeEvent(self, e, skip=[False]):
-        skip[0] = not skip[0]
-        self.side = min(self.height(), self.width())
-        if not skip[0]: self.resize(self.sizeHint())
-        QWidget.resizeEvent(self, e)
+
     def sizeHint(self):
-        return QSize(self.side, self.side)
+        side = min(self.size().height(), self.size().width())
+        return QSize(side+20, side+20)
 
 
 if __name__ == "__main__":
