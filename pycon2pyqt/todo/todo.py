@@ -16,8 +16,10 @@ class Todo(QWidget):
         self.lm = QStringListModel(None)
         self.lv.setModel(self.lm)
         self.le = QLineEdit(None)
+        self.bt =QPushButton("Crash!")
         vbl.addWidget(self.lv)
         vbl.addWidget(self.le)
+        vbl.addWidget(self.bt)
 
         # Fill the view        
         self.lm.setStringList([self.settings.value(todo).toString() for todo in self.settings.allKeys()])
@@ -27,6 +29,8 @@ class Todo(QWidget):
         QObject.connect(self.le, SIGNAL("returnPressed()"), self.le.clear)
 
         QObject.connect(self.lv, SIGNAL("doubleClicked(const QModelIndex &)"), self.edit)
+
+        QObject.connect(self.bt, SIGNAL("clicked()"), self.crash)
 
     def insert(self):
         self.lm.insertRows(0, 1)
@@ -41,10 +45,19 @@ class Todo(QWidget):
         self.le.selectAll()
         self.le.setFocus()
 
+    def crash(self):
+        raise ValueError
+
     def closeEvent(self, event):
         self.settings.clear()
         for i, item in enumerate(self.lm.stringList()):
             self.settings.setValue(u"todo/%d" % (i,), QVariant(item))
+
+def qtexcepthook(type, value, tb):
+    import traceback
+    QMessageBox.critical(None, "Error!!", "".join(traceback.format_exception(type, value, tb)))
+    qApp.closeAllWindows()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -52,6 +65,7 @@ if __name__ == "__main__":
     #translator.load("todo-en.qm")
     #app.installTranslator(translator)
     todo = Todo()
+    sys.excepthook = qtexcepthook
     todo.show()
     sys.exit(app.exec_())
 
