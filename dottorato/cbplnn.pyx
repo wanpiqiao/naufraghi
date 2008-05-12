@@ -111,6 +111,14 @@ cdef class Vector:
     def __setitem__(self, int idx, double val):
         if not 0 <= idx < self.size: raise IndexError
         self.data[idx] = val
+    cpdef int argmax(self):
+        cdef double _max = self.data[0]
+        cdef int idx = 0
+        for i from 1 <= i < self.size:
+            if self.data[i] > _max:
+                _max = self.data[i]
+                idx = i
+        return idx
     def __len__(self):
         return self.size
     def __repr__(self):

@@ -115,7 +115,7 @@ class ShallowNetwork:
     def test(self, patterns):
         def getId(targets):
             if len(targets) > 1:
-                return targets.index(max(targets))
+                return targets.argmax()
             else:
                 return targets[0] > 0.5 # only Sigmoid...
         res = {}
@@ -203,7 +203,7 @@ class DeepNetwork:
     def test(self, patterns):
         def getId(targets):
             if len(targets) > 1:
-                return targets.index(max(targets))
+                return targets.argmax()
             else:
                 return int(targets[0] > 0.5) # only Sigmoid...
         res = {}
