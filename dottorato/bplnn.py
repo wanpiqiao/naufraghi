@@ -97,6 +97,7 @@ class ShallowNetwork:
         self.propagate(inputs)
         return self.out_layer.getOutputs()
     def train(self, patterns, iterations=1000, learn=0.05):
+        nan = float("nan")
         for i in range(iterations):
             random.shuffle(patterns)
             error = 0.0
@@ -108,6 +109,8 @@ class ShallowNetwork:
                 logging.debug("iter(%s) error = %f" % (iterations - i, error))
             if error < learn:
                 break
+            if error == nan:
+                raise ValueError(error)
     def _test(self, patterns):
         for inputs, targets in patterns:
             res = self.getOutputs(inputs)
@@ -200,6 +203,8 @@ class DeepNetwork:
                 logging.debug("iter(%s) error = %f" % (count, error))
             if error < err:
                 break
+            if error == nan:
+                raise ValueError(error)
     def test(self, patterns):
         def getId(targets):
             if len(targets) > 1:
@@ -208,14 +213,16 @@ class DeepNetwork:
                 return int(targets[0] > 0.5) # only Sigmoid...
         res = {}
         test_patterns = [(vector(list(inputs) + [1.0]), targets) for inputs, targets in patterns]
+        printed = 0
         for inputs, targets in test_patterns:
             outputs = self.getOutputs(inputs)
             idx = getId(targets)
             res.setdefault(idx, {True: 0.0, False: 0.0, "err": None})
             res[idx][idx == getId(outputs)] += 1.0
             res[idx]["err"] = res[idx][False] / (res[idx][True] + res[idx][False])
-            if len(patterns) < 10:
+            if printed < 10:
                 print inputs, targets, "->", outputs
+                printed += 1
         logging.info(res)
     def dump(self):
         return {"DeepNetwork": [l.dump() for l in self.layers]}
