@@ -22,7 +22,7 @@ def load_data(filename):
         inputs = picture # already [-1, 1]
         # digitalize outputs
         targets = [(i == number) and 1 or -1 for i in range(10)]
-        data.append([inputs, targets])
+        data.append([vector(inputs), vector(targets)])
     print stats(data)
     print "-"*70
     return data
@@ -32,7 +32,7 @@ def run():
     patterns = load_data("zip.train.gz")
     n_in = len(patterns[0][0])
     n_out = len(patterns[0][1])
-    net = DeepNetwork([n_in, n_in/2, n_in/4, n_out], auto_mode="input")
+    net = DeepNetwork([n_in, n_in/2, n_in/4, n_out], auto_mode="step")
     net.train(patterns, 1000)
     print net
     test_patterns = load_data("zip.test.gz")

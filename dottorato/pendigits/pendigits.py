@@ -21,7 +21,7 @@ def load_data(filename):
         inputs = [float(i)/100 for i in stroke]
         # digitalize outputs
         targets = [int(i == number) for i in range(10)]
-        data.append([inputs, targets])
+        data.append([vector(inputs), vector(targets)])
     print stats(data)
     print "-"*70
     return data
