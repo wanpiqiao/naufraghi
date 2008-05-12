@@ -96,20 +96,20 @@ cdef class CrossEntropy(Loss):
 cdef class Vector:
     cdef int size
     cdef double* data
-    def __new__(self, array):
-        self.size = len(array)
+    def __new__(self, int size, double fill=0.0):
+        self.size = size
         self.data = <double *>malloc(self.size * sizeof(double))
-        for i, val in enumerate(array):
-            self.data[i] = val
+        for i in range(size):
+            self.data[i] = fill
     cdef double get(self, int idx):
         return self.data[idx]
     cdef set(self, int idx, double val):
         self.data[idx] = val
     def __getitem__(self, int idx):
-        assert 0 <= idx < self.size, "Index Error: %d" % idx
+        if not 0 <= idx < self.size: raise IndexError
         return self.data[idx]
     def __setitem__(self, int idx, double val):
-        assert 0 <= idx < self.size, "Index Error: %d" % idx
+        if not 0 <= idx < self.size: raise IndexError
         self.data[idx] = val
     def __len__(self):
         return self.size
@@ -117,6 +117,12 @@ cdef class Vector:
         return "Vector(%s)" % [self.data[i] for i in range(self.size)]
     def __dealloc__(self):
         free(self.data)
+
+def vector(array):
+    vec = Vector(len(array))
+    for i, v in enumerate(array):
+        vec[i] = v
+    return vec
 
 cdef double dot(double* vec1, double* vec2, int num):
     cdef double _sum = 0.0
@@ -135,25 +141,25 @@ cdef double dot_t(double** matrix, int j, double* vec, int num):
 cdef class Layer:
     cdef int n_in
     cdef int n_out
-    cdef double* inputs
-    cdef double* delta_inputs
+    cdef Vector inputs
+    cdef Vector delta_inputs
     cdef double** weights
-    cdef double* outputs
-    cdef double* delta_outputs
-    cdef double* targets
+    cdef Vector outputs
+    cdef Vector delta_outputs
+    cdef Vector targets
     cdef Loss loss
     cdef int connected
     def __new__(self, int n_in, int n_out, loss=CrossEntropy, squash=None):
         self.n_in = n_in
         self.n_out = n_out
-        self.inputs = <double *>malloc(n_in * sizeof(double))
-        self.delta_inputs = <double *>malloc(n_in * sizeof(double))
+        self.inputs = Vector(n_in, 1.0)
+        self.delta_inputs = Vector(n_in, 0.0)
         self.weights = <double **>malloc(n_out * sizeof(double*))
         for k from 0 <= k < n_out:
             self.weights[k] = <double *>malloc(n_in * sizeof(double))
-        self.outputs = <double *>malloc(n_out * sizeof(double))
-        self.delta_outputs = <double *>malloc(n_out * sizeof(double))
-        self.targets = <double *>malloc(n_out * sizeof(double))
+        self.outputs = Vector(n_out, 1.0)
+        self.delta_outputs = Vector(n_out, 0.0)
+        self.targets = Vector(n_out, 1.0)
         if not squash:
             self.loss = loss()
         else:
@@ -170,15 +176,15 @@ cdef class Layer:
             self.outputs[k] = 1.0
             self.delta_outputs[k] = 0.0
             self.targets[k] = 1.0
-    def propagate(self, inputs=None):
+    def propagate(self, Vector inputs=None):
         if inputs != None:
             for j from 0 <= j < self.n_in:
                 self.inputs[j] = inputs[j]
         self._propagate()
     cdef _propagate(self):
         for k from 0 <= k < self.n_out:
-            self.outputs[k] = self.loss.squash.func(dot(self.weights[k], self.inputs, self.n_in))
-    def backPropagate(self, targets=None):
+            self.outputs[k] = self.loss.squash.func(dot(self.weights[k], self.inputs.data, self.n_in))
+    def backPropagate(self, Vector targets=None):
         if targets != None:
             for k from 0 <= k < self.n_out:
                 self.targets[k] = targets[k]
@@ -188,9 +194,9 @@ cdef class Layer:
             return self.error()
     cdef _backPropagate(self):
         for j from 0 <= j < self.n_in:
-            self.delta_inputs[j] = self.loss.squash.deriv(self.inputs[j]) * dot_t(self.weights, j, self.delta_outputs, self.n_out)
+            self.delta_inputs[j] = self.loss.squash.deriv(self.inputs[j]) * dot_t(self.weights, j, self.delta_outputs.data, self.n_out)
     cpdef error(self):
-        return self.loss.error(self.outputs, self.targets, self.n_out)
+        return self.loss.error(self.outputs.data, self.targets.data, self.n_out)
     cpdef updateWeights(self, double learn):
         cdef double momentum = 1.0
         for j from 0 <= j < self.n_in:
@@ -205,10 +211,7 @@ cdef class Layer:
             for k from 0 <= k < self.n_out:
                 self.weights[k][j] = other.weights[k][j]
     def getInputs(self):
-        res = []
-        for j from 0 <= j < self.n_in:
-            res.append(self.inputs[j])
-        return res
+        return self.inputs
     def getWeights(self):
         res = []
         for k from 0 <= k < self.n_out:
@@ -223,10 +226,7 @@ cdef class Layer:
     def getOutputs(self, inputs=None):
         if inputs != None:
             self.propagate(inputs)
-        res = []
-        for k from 0 <= k < self.n_out:
-            res.append(self.outputs[k])
-        return res
+        return self.outputs
     def dump(self):
         res = dict(inputs  = self.getInputs(),
                    weights = self.getWeights(),
@@ -235,14 +235,7 @@ cdef class Layer:
     def __repr__(self):
         return "<Layer %d %d>" % (self.n_in, self.n_out)
     def __dealloc__(self):
-        if not self.connected:
-            free(self.inputs)
-            free(self.delta_inputs)
         for k from 0 <= k < self.n_out:
             free(self.weights[k])
         free(self.weights)
-        free(self.outputs)
-        free(self.delta_outputs)
-        free(self.targets)
-
 
