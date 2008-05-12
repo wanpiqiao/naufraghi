@@ -33,8 +33,16 @@ def run():
     n_in = len(patterns[0][0])
     n_out = len(patterns[0][1])
     net = DeepNetwork([n_in, n_in/2, n_in/4, n_out], auto_mode="step")
-    net.train(patterns, 1000)
     print net
+    trace("AutoTrain")
+    for i in range(1):
+        net.prepare(patterns, 1000, 0.05)
+    trace("Test1")
+    test_patterns = load_data("zip.test.gz")
+    net.test(test_patterns)
+    trace("FineTrain")
+    net.train(patterns, 1000)
+    trace("Test2")
     test_patterns = load_data("zip.test.gz")
     net.test(test_patterns)
     print net.dump()
