@@ -22,29 +22,30 @@ def Layer():
     >>> a = nn.Layer(3, 5)
     >>> b = nn.Layer(5, 1)
     >>> a.connect(b)
-    >>> a.propagate([1.0, 1.0, 1.0])
+    >>> a.propagate(nn.vector([1.0, 1.0, 1.0]))
     >>> b.propagate()
-    >>> b.backPropagate([0.0])
-    0.059802896118833375
+    >>> b.backPropagate(nn.vector([0.0])) < 0.5
+    True
     >>> a.backPropagate()
     >>> a.updateWeights(0.05)
     >>> b.updateWeights(0.05)
-    >>> a.propagate([1.0, 1.0, 1.0])
+    >>> a.propagate(nn.vector([1.0, 1.0, 1.0]))
     >>> b.propagate()
-    >>> b.backPropagate([0.0])
-    0.048439615097086802
+    >>> b.backPropagate(nn.vector([0.0])) < 0.5
+    True
     """
 
 def Vector():
     """
-    >>> a = nn.Vector([1,2,3,4])
+    >>> a = nn.Vector(4)
     >>> a
-    Vector([1.0, 2.0, 3.0, 4.0])
+    Vector([0.0, 0.0, 0.0, 0.0])
+    >>> a = nn.Vector(4, 1.0)
     >>> a[0]
     1.0
     >>> a[1] = 7
     >>> a
-    Vector([1.0, 7.0, 3.0, 4.0])
+    Vector([1.0, 7.0, 1.0, 1.0])
     """
 
 

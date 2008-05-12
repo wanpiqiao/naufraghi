@@ -82,7 +82,9 @@ class ShallowNetwork:
         self.out_layer = Layer(n_hid, n_out, loss)
         self.in_layer.connect(self.out_layer)
     def propagate(self, inputs):
-        self.in_layer.propagate(inputs + self.bias)
+        if self.bias:
+            inputs = v(list(inputs) + self.bias)
+        self.in_layer.propagate(inputs)
         self.out_layer.propagate()
     def backPropagate(self, targets):
         err = self.out_layer.backPropagate(targets)
@@ -154,7 +156,7 @@ class DeepNetwork:
         self.propagate(inputs)
         return self.layers[-1].getOutputs()
     def prepare(self, patterns, iterations, learn):
-        auto_patterns = [(inputs + [1.0], inputs + [1.0]) for inputs, targets in patterns]
+        auto_patterns = [(vector(list(inputs) + [1.0]), vector(list(inputs) + [1.0])) for inputs, targets in patterns]
         logging.info("prepare")
         earlystop = iterations / (2 * len(self.layers))
         for c, layer in enumerate(self.layers):
@@ -185,12 +187,13 @@ class DeepNetwork:
         count = iterations
         step = 10 + int(math.log(iterations))
         err = learn/(iterations/10)
+        train_patterns = [(vector(list(inputs) + [1.0]), targets) for inputs, targets in patterns]
         while count > 0:
-            random.shuffle(patterns)
+            random.shuffle(train_patterns)
             count -= 1
             error = 0.0
-            for inputs, targets in patterns:
-                self.propagate(inputs + [1.0])
+            for inputs, targets in train_patterns:
+                self.propagate(inputs)
                 error += self.backPropagate(targets)
                 self.updateWeights(learn)
             if not count % step:
@@ -204,8 +207,9 @@ class DeepNetwork:
             else:
                 return int(targets[0] > 0.5) # only Sigmoid...
         res = {}
-        for inputs, targets in patterns:
-            outputs = self.getOutputs(inputs + [1.0])
+        test_patterns = [(vector(list(inputs) + [1.0]), targets) for inputs, targets in patterns]
+        for inputs, targets in test_patterns:
+            outputs = self.getOutputs(inputs)
             idx = getId(targets)
             res.setdefault(idx, {True: 0.0, False: 0.0, "err": None})
             res[idx][idx == getId(outputs)] += 1.0
@@ -222,10 +226,10 @@ class DeepNetwork:
 def demo():
     # Teach network XOR function
     patterns = [
-        [[0.0,0.0], [0.0]],
-        [[0.0,1.0], [1.0]],
-        [[1.0,0.0], [1.0]],
-        [[1.0,1.0], [0.0]]
+        [vector([0.0,0.0]), vector([0.0])],
+        [vector([0.0,1.0]), vector([1.0])],
+        [vector([1.0,0.0]), vector([1.0])],
+        [vector([1.0,1.0]), vector([0.0])]
     ]
     _patterns = [
         [[-1.0,-1.0], [-1.0]],
