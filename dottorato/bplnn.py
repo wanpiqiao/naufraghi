@@ -13,6 +13,8 @@ from cbplnn import *
 
 logging.getLogger().setLevel(logging.DEBUG)
 
+nan = float("nan")
+
 def print_exc_plus():
     """
     Print the usual traceback information, followed by a listing of all the
@@ -97,7 +99,6 @@ class ShallowNetwork:
         self.propagate(inputs)
         return self.out_layer.getOutputs()
     def train(self, patterns, iterations=1000, learn=0.05):
-        nan = float("nan")
         for i in range(iterations):
             random.shuffle(patterns)
             error = 0.0
@@ -174,15 +175,24 @@ class DeepNetwork:
                 auto_net.in_layer.copyWeights(layer)
                 auto_net.train(auto_patterns, iterations, learn)
             layer.copyWeights(auto_net.in_layer)
-            new_auto_patterns = []
-            for inputs, targets in auto_patterns:
-                auto_net.propagate(inputs)
-                new_inputs = auto_net.out_layer.getInputs()
-                if self.auto_mode == "step":
-                    new_auto_patterns.append((new_inputs, new_inputs))
-                else:
-                    new_auto_patterns.append((new_inputs, targets))
-            auto_patterns = new_auto_patterns
+            if layer != self.layers[-1]:
+                new_auto_patterns = []
+                for inputs, targets in auto_patterns:
+                    auto_net.propagate(inputs)
+                    new_inputs = auto_net.out_layer.getInputs()
+                    if self.auto_mode == "step":
+                        new_auto_patterns.append((new_inputs, new_inputs))
+                    else:
+                        new_auto_patterns.append((new_inputs, targets))
+                auto_patterns = new_auto_patterns
+            else:
+                auto_outputs = []
+                for c, (inputs, targets) in enumerate(auto_patterns):
+                    auto_net.propagate(inputs)
+                    outputs = auto_net.out_layer.getInputs()
+                    auto_outputs.append((outputs, patterns[c][1]))
+                import pprint
+                open("auto_outputs.log", "w+").write(pprint.pformat(auto_outputs)+"\n")
         self._connect()
     def train(self, patterns, iterations=1000, learn=0.05):
         #self.prepare(patterns, iterations, learn)
@@ -247,14 +257,15 @@ def demo():
 
     # create a network
     #net = ShallowNetwork(2, 5, 1)
-    net = DeepNetwork([2, 3, 1], ["step", "input"][1])
+    net = DeepNetwork([2, 3, 1], ["step", "input"][0])
     # train it with some patterns
     for i in range(1):
-        net.prepare(patterns, 10000, 0.05)
+        net.prepare(patterns, 50000, 0.05)
     # test it
     #print net.dump()
     net.test(patterns)
     print net
+    return
     net.train(patterns, 50000)
     net.test(patterns)
 

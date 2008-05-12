@@ -29,9 +29,9 @@ def load_data(filename):
 def run():
     trace("PenDigits dataset", "#")
     patterns = load_data("pendigits.tra")
-    n_in = len(patterns[0][0])
-    n_out = len(patterns[0][1])
-    net = DeepNetwork([n_in, (n_in+n_out)/2, n_out], auto_mode="step")
+    n_in = len(patterns[0][0]) # 16
+    n_out = len(patterns[0][1]) # 10
+    net = DeepNetwork([n_in, 14, 12, n_out], auto_mode="step")
     print net
     for i in range(1):
         net.prepare(patterns, 1000, 0.05)
