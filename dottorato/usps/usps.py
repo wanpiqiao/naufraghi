@@ -36,7 +36,7 @@ def run():
     print net
     trace("AutoTrain")
     for i in range(1):
-        net.prepare(patterns, 1000, 0.05)
+        net.prepare(patterns, 100, 0.05)
     trace("Test1")
     test_patterns = load_data("zip.test.gz")
     net.test(test_patterns)

@@ -111,7 +111,8 @@ class ShallowNetwork:
                 self.updateWeights(learn)
             if not i % (1+iterations/100):
                 logging.debug("iter(%s) error = %f" % (iterations - i, error))
-            if abs(error - last_error) < learn / iterations:
+            if abs(error - last_error) < learn / (iterations * len(patterns)):
+                print "early exit, delta_error too small!!"
                 break
             if error == nan:
                 raise ValueError(error)
@@ -198,6 +199,8 @@ class DeepNetwork:
                 open("auto_outputs.log", "w+").write(pprint.pformat(auto_outputs)+"\n")
         self._connect()
     def train(self, patterns, iterations=1000, learn=0.05):
+        error = last_error = 0.0
+        min_error = [float("inf"), [], 0] # err, weights, count
         #self.prepare(patterns, iterations, learn)
         logging.info("train")
         count = iterations
@@ -207,6 +210,7 @@ class DeepNetwork:
         while count > 0:
             random.shuffle(train_patterns)
             count -= 1
+            last_error = error
             error = 0.0
             for inputs, targets in train_patterns:
                 self.propagate(inputs)
@@ -214,7 +218,18 @@ class DeepNetwork:
                 self.updateWeights(learn)
             if not count % step:
                 logging.debug("iter(%s) error = %f" % (count, error))
-            if error < err:
+            if error < min_error[0]:
+                min_error = [error, [l.getWeights() for l in self.layers], 0]
+            else:
+                min_error[2] += 1
+                if min_error[2] > 10 *  step:
+                    print "Revert to best so far!!"
+                    min_error[0] = float("inf")
+                    min_error[2] = 0
+                    for c, w in enumerate(min_error[1]):
+                        self.layers[c].setWeights(w)
+            if False and abs(error - last_error) < learn / (iterations * len(patterns)):
+                print "early exit, delta_error too small!!"
                 break
             if error == nan:
                 raise ValueError(error)
@@ -234,7 +249,7 @@ class DeepNetwork:
             res[idx][idx == getId(outputs)] += 1.0
             res[idx]["acc"] = 100 * res[idx][True] / (res[idx][True] + res[idx][False])
             if printed < 10:
-                logging.info("%s -> %s (%s)" % (inputs, outputs, targets))
+                logging.info("%s -> %s" % (outputs, targets))
                 printed += 1
         logging.info(pprint.pformat(res))
     def dump(self):
@@ -260,7 +275,7 @@ def demo():
 
     # create a network
     #net = ShallowNetwork(2, 5, 1)
-    net = DeepNetwork([2, 3, 1], ["step", "input"][0])
+    net = DeepNetwork([2, 3, 3, 1], ["step", "input"][0])
     # train it with some patterns
     for i in range(1):
         net.prepare(patterns, 50000, 0.05)
@@ -268,7 +283,7 @@ def demo():
     #print net.dump()
     net.test(patterns)
     print net
-    return
+    time.sleep(5)
     net.train(patterns, 50000)
     net.test(patterns)
 
