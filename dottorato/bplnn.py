@@ -8,6 +8,7 @@ import time
 import random
 
 import logging
+import pprint
 
 from cbplnn import *
 
@@ -129,7 +130,7 @@ class ShallowNetwork:
             res.setdefault(idx, {True: 0.0, False: 0.0, "err": None})
             res[idx][idx == getId(outputs)] += 1.0
             res[idx]["err"] = res[idx][False] / (res[idx][True] + res[idx][False])
-        logging.info(res)
+        logging.info(pprint.pformat(res))
     def dump(self):
         return {"ShallowNetwork": [self.in_layer.dump(), self.out_layer.dump()]}
     def __str__(self):
@@ -168,7 +169,7 @@ class DeepNetwork:
                 auto_net = ShallowNetwork(len(layer.getInputs()), len(layer.getOutputs()), len(layer.getInputs()), bias=False)
                 logging.debug("auto_net(step): %s" % auto_net)
                 auto_net.in_layer.copyWeights(layer)
-                auto_net.train(auto_patterns, iterations - (c * earlystop), learn)
+                auto_net.train(auto_patterns, iterations - (c * earlystop), learn * (len(self.layers) - c))
             else:
                 auto_net = ShallowNetwork(len(layer.getInputs()), len(layer.getOutputs()), len(self.layers[0].getInputs()), bias=False)
                 logging.debug("auto_net(input): %s" % auto_net)
@@ -233,7 +234,7 @@ class DeepNetwork:
             if printed < 10:
                 print inputs, targets, "->", outputs
                 printed += 1
-        logging.info(res)
+        logging.info(pprint.pformat(res))
     def dump(self):
         return {"DeepNetwork": [l.dump() for l in self.layers]}
     def __str__(self):
