@@ -29,15 +29,15 @@ def load_data(filename):
 def run():
     trace("PenDigits dataset", "#")
     patterns = load_data("pendigits.tra")
+    test_patterns = load_data("pendigits.tes")
     n_in = len(patterns[0][0]) # 16
     n_out = len(patterns[0][1]) # 10
     net = DeepNetwork([n_in, 14, 12, n_out], auto_mode="step")
     print net
-    for i in range(10):
+    for i in range(5):
         net.prepare(patterns, 100, 0.05)
+        net.test(test_patterns)
     #print net.dump()
-    test_patterns = load_data("pendigits.tes")
-    net.test(test_patterns)
     print "!"*20, "auto test", "!"*20
     net.train(patterns, 10000)
     net.test(test_patterns)

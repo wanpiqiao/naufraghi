@@ -100,8 +100,10 @@ class ShallowNetwork:
         self.propagate(inputs)
         return self.out_layer.getOutputs()
     def train(self, patterns, iterations=1000, learn=0.05):
+        error = last_error = 0.0
         for i in range(iterations):
             random.shuffle(patterns)
+            last_error = error
             error = 0.0
             for inputs, targets in patterns:
                 self.propagate(inputs)
@@ -109,7 +111,7 @@ class ShallowNetwork:
                 self.updateWeights(learn)
             if not i % (1+iterations/100):
                 logging.debug("iter(%s) error = %f" % (iterations - i, error))
-            if error < learn:
+            if abs(error - last_error) < learn / iterations:
                 break
             if error == nan:
                 raise ValueError(error)
@@ -163,13 +165,13 @@ class DeepNetwork:
     def prepare(self, patterns, iterations, learn):
         auto_patterns = [(vector(list(inputs) + [1.0]), vector(list(inputs) + [1.0])) for inputs, targets in patterns]
         logging.info("prepare")
-        earlystop = iterations / (2 * len(self.layers))
+        earlystop = int(0.7 * iterations / len(self.layers))
         for c, layer in enumerate(self.layers):
             if self.auto_mode == "step":
                 auto_net = ShallowNetwork(len(layer.getInputs()), len(layer.getOutputs()), len(layer.getInputs()), bias=False)
                 logging.debug("auto_net(step): %s" % auto_net)
                 auto_net.in_layer.copyWeights(layer)
-                auto_net.train(auto_patterns, iterations - (c * earlystop), learn * (len(self.layers) - c))
+                auto_net.train(auto_patterns, iterations - (c * earlystop), 2 * learn * (len(self.layers) - c))
             else:
                 auto_net = ShallowNetwork(len(layer.getInputs()), len(layer.getOutputs()), len(self.layers[0].getInputs()), bias=False)
                 logging.debug("auto_net(input): %s" % auto_net)
@@ -228,11 +230,11 @@ class DeepNetwork:
         for inputs, targets in test_patterns:
             outputs = self.getOutputs(inputs)
             idx = getId(targets)
-            res.setdefault(idx, {True: 0.0, False: 0.0, "err": None})
+            res.setdefault(idx, {True: 0.0, False: 0.0})
             res[idx][idx == getId(outputs)] += 1.0
-            res[idx]["err"] = res[idx][False] / (res[idx][True] + res[idx][False])
+            res[idx]["acc"] = 100 * res[idx][True] / (res[idx][True] + res[idx][False])
             if printed < 10:
-                print inputs, targets, "->", outputs
+                logging.info("%s -> %s (%s)" % (inputs, outputs, targets))
                 printed += 1
         logging.info(pprint.pformat(res))
     def dump(self):
