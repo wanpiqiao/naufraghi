@@ -34,7 +34,8 @@ def run():
     n_out = len(patterns[0][1]) # 10
     net = DeepNetwork([n_in, 14, 12, n_out], auto_mode="step")
     print net
-    for i in range(5):
+    for i in range(1): # multiple rounds are not so good...
+        print "prepare round", i
         net.prepare(patterns, 100, 0.05)
         net.test(test_patterns)
     #print net.dump()
