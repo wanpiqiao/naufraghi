@@ -36,8 +36,9 @@ numpen = 500
 numpen2 = 250
 numopen = 30
 
-print 'Converting Raw files into Matlab format'
-converter.run()
+#print 'Converting Raw files into Matlab format'
+#converter.run()
+# Downloaded mist_all.mat from http://www.cs.toronto.edu/~roweis/data.html
 
 print 'Pretraining a deep autoencoder.'
 print 'The Science paper used 50 epochs. This uses %3d' % maxepoch
