@@ -8,9 +8,9 @@ import time
 from numpy import *
 import numpy.matlib as m
 
-# Version 1.000 
+# Version 1.000
 #
-# Code provided by Geoff Hinton and Ruslan Salakhutdinov 
+# Code provided by Geoff Hinton and Ruslan Salakhutdinov
 #
 # Permission is granted for anyone to copy, use, modify, or distribute this
 # program and accompanying programs and documents for any purpose, provided
@@ -22,33 +22,31 @@ import numpy.matlib as m
 # not been tested to the degree that would be advisable in any important
 # application.  All use of these programs is entirely at the user's own risk.
 
-epsilonw  = 0.1 # Learning rate for weights 
-epsilonvb = 0.1 # Learning rate for biases of visible units 
-epsilonhb = 0.1 # Learning rate for biases of hidden units 
-weightcost = 0.0002   
+epsilonw  = 0.1 # Learning rate for weights
+epsilonvb = 0.1 # Learning rate for biases of visible units
+epsilonhb = 0.1 # Learning rate for biases of hidden units
+weightcost = 0.0002
 initialmomentum  = 0.5
 finalmomentum    = 0.9
 
-def run():
-    # Matlab style input...
-    locals().update(globals())
+def run(maxepoch, numhid, batchdata, restart):
     # This program trains Restricted Boltzmann Machine in which
     # visible, binary, stochastic pixels are connected to
     # hidden, binary, stochastic feature detectors using symmetrically
-    # weighted connections. Learning is done with 1-step Contrastive Divergence.   
+    # weighted connections. Learning is done with 1-step Contrastive Divergence.
     # The program assumes that the following variables are set externally:
     # maxepoch  -- maximum number of epochs
-    # numhid    -- number of hidden units 
+    # numhid    -- number of hidden units
     # batchdata -- the data that is divided into batches (numcases numdims numbatches)
-    # restart   -- set to 1 if learning starts from beginning 
+    # restart   -- set to 1 if learning starts from beginning
 
-    numcases, numdims, numbatches = shape(batchdata)
+    numbatches, numcases, numdims = shape(batchdata)
 
     if restart == 1:
         restart = 0
         epoch = 0
 
-        # Initializing symmetric weights and biases. 
+        # Initializing symmetric weights and biases.
         vishid     = 0.1*random.randn(numdims, numhid)
         hidbiases  = m.zeros((1, numhid))
         visbiases  = m.zeros((1, numdims))
@@ -60,18 +58,18 @@ def run():
         vishidinc  = m.zeros((numdims, numhid))
         hidbiasinc = m.zeros((1, numhid))
         visbiasinc = m.zeros((1, numdims))
-        batchposhidprobs = zeros((numcases, numhid, numbatches))
+        batchposhidprobs = zeros((numbatches, numcases, numhid))
 
     for epoch in range(epoch, maxepoch):
-        print 'epoch %d\n' % epoch 
+        print 'epoch %d' % epoch
         errsum = 0
-        for batch in range(0, numbatches)
-            print 'epoch %d batch %d\n' % (epoch, batch) 
+        for batch in range(0, numbatches):
+            print 'epoch %d batch %d/%d' % (epoch, batch, numbatches)
 
             ######### START POSITIVE PHASE ###################################################
-            data = mat(batchdata[:,:,batch])
-            poshidprobs = 1.0 / (1.0 + exp(-data*vishid - tile(hidbiases, (numcases, 1)))) 
-            batchposhidprobs[:,:,batch] = poshidprobs
+            data = mat(batchdata[batch])
+            poshidprobs = 1.0 / (1.0 + exp(-data*vishid - tile(hidbiases, (numcases, 1))))
+            batchposhidprobs[batch] = poshidprobs
             posprods    = data.T * poshidprobs
             poshidact   = sum(poshidprobs)
             posvisact = sum(data)
@@ -87,7 +85,7 @@ def run():
             negvisact = sum(negdata)
 
             ######### END OF NEGATIVE PHASE ##################################################
-            err = sum(sum( (data-negdata)**2 ))
+            err = sum(sum( array(data-negdata)**2 ))
             errsum = err + errsum
 
             if epoch > 5:
@@ -95,7 +93,7 @@ def run():
             else:
                 momentum = initialmomentum
 
-            ######### UPDATE WEIGHTS AND BIASES ############################################### 
+            ######### UPDATE WEIGHTS AND BIASES ###############################################
             vishidinc = momentum*vishidinc + \
                         epsilonw*( (posprods-negprods)/numcases - weightcost*vishid)
             visbiasinc = momentum*visbiasinc + (epsilonvb/numcases)*(posvisact-negvisact)
@@ -105,8 +103,8 @@ def run():
             visbiases = visbiases + visbiasinc
             hidbiases = hidbiases + hidbiasinc
 
-            ################ END OF UPDATES #################################################### 
+            ################ END OF UPDATES ####################################################
 
-        print 'epoch %4d error %6.1f  \n' % (epoch, errsum)
+        print '### epoch %4d error %6.1f' % (epoch, errsum)
     # Matlab style return...
-    globals().update(locals())
+    return locals()
