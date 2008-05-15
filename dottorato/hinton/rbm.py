@@ -80,7 +80,7 @@ def run(maxepoch, numhid, batchdata, restart):
             ######### START NEGATIVE PHASE  ##################################################
             negdata = 1.0 / (1.0 + exp(-poshidstates*vishid.T - tile(visbiases, (numcases, 1))))
             neghidprobs = 1.0 / (1.0 + exp(-negdata*vishid - tile(hidbiases, (numcases, 1))))
-            negprods  = negdata.T*neghidprobs
+            negprods  = negdata.T * neghidprobs
             neghidact = sum(neghidprobs)
             negvisact = sum(negdata)
 

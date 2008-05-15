@@ -48,8 +48,8 @@ def mnist(batchsize=100): # for performance reasons the training data
     """
     return batchdata
 
-def usps(batchsize=100): # for performance reasons the training data
-                         # is partitioned in matrixes
+def usps(batchsize=25): # for performance reasons the training data
+                        # is partitioned in matrixes
     filename = "zip.train.gz"
     print "Loading '%s'" % filename
     batchdata = []
