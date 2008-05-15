@@ -37,21 +37,21 @@ numpen2 = 250
 numopen = 30
 
 print 'Converting Raw files into Matlab format'
-converter; 
+converter.run()
 
 print 'Pretraining a deep autoencoder.'
 print 'The Science paper used 50 epochs. This uses %3d' % maxepoch
 
-makebatches;
+makebatches.run()
 numcases, numdims, numbatches = shape(batchdata)
 
 print 'Pretraining Layer 1 with RBM: %d-%d' % (numdims, numhid)
 restart = 1
 rbm.run()
 hidrecbiases = hidbiases
-save mnistvh vishid hidrecbiases visbiases;
+save(mnistvh, vishid, hidrecbiases, visbiases)
 
-print 'Pretraining Layer 2 with RBM: %d-%d' (numhid, numpen)
+print 'Pretraining Layer 2 with RBM: %d-%d' % (numhid, numpen)
 batchdata = batchposhidprobs
 numhid = numpen
 restart = 1
@@ -59,9 +59,9 @@ rbm.run()
 hidpen = vishid
 penrecbiases = hidbiases
 hidgenbiases = visbiases
-save mnisthp hidpen penrecbiases hidgenbiases;
+save(mnisthp, hidpen, penrecbiases, hidgenbiases)
 
-print 'Pretraining Layer 3 with RBM: %d-%d' (numpen, numpen2)
+print 'Pretraining Layer 3 with RBM: %d-%d' % (numpen, numpen2)
 batchdata = batchposhidprobs
 numhid = numpen2
 restart = 1
@@ -69,9 +69,9 @@ rbm.run()
 hidpen2 = vishid
 penrecbiases2 = hidbiases
 hidgenbiases2 = visbiases
-save mnisthp2 hidpen2 penrecbiases2 hidgenbiases2;
+save (mnisthp2, hidpen2, penrecbiases2, hidgenbiases2)
 
-print 'Pretraining Layer 4 with RBM: %d-%d' (numpen2, numopen)
+print 'Pretraining Layer 4 with RBM: %d-%d' % (numpen2, numopen)
 batchdata = batchposhidprobs
 numhid = numopen
 restart = 1
@@ -79,7 +79,7 @@ rbmhidlinear.run()
 hidtop = vishid
 toprecbiases = hidbiases
 topgenbiases = visbiases
-save mnistpo hidtop toprecbiases topgenbiases;
+save(mnistpo, hidtop, toprecbiases, topgenbiases)
 
-import backprop
+backprop.run()
 
