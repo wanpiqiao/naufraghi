@@ -32,10 +32,10 @@ import rbmhidlinear
 # and you can set the architecture of the multilayer net.
 
 maxepoch = 10 #In the Science paper we use maxepoch=50, but it works just fine.
-numhid = 1000
-numpen = 500
-numpen2 = 250
-numopen = 30
+numhid = 1000/2
+numpen = 500/2
+numpen2 = 250/2
+numopen = 30/2
 
 #print 'Converting Raw files into Matlab format'
 #converter.run()
@@ -44,7 +44,7 @@ numopen = 30
 print 'Pretraining a deep autoencoder.'
 print 'The Science paper used 50 epochs. This uses %3d' % maxepoch
 
-batchdata = makebatches.run()
+batchdata = makebatches.usps()
 numbatches, numcases, numdims = shape(batchdata)
 
 print 'Pretraining Layer 1 with RBM: %d-%d' % (numdims, numhid)

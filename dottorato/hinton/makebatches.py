@@ -4,17 +4,18 @@
 
 import sys
 import time
+import gzip
 
 from numpy import *
 from numpy import matlib
 from numpy import random
 from scipy.io import loadmat
 
-def run(batchsize=100): # for performance reasons the training data
+def mnist(batchsize=100): # for performance reasons the training data
                         # is partitioned in matrixes
-    mnist = loadmat("mnist_all.mat")
+    data = loadmat("mnist_all.mat")
     """
-    >>> [(m, mnist[m].shape) for m in mnist.keys() if "_" not in m]
+    >>> [(m, data[m].shape) for m in data.keys() if "_" not in m]
     [('test1', (1135, 784)),
     ('test0', (980, 784)),
     ('test3', (1010, 784)),
@@ -36,7 +37,7 @@ def run(batchsize=100): # for performance reasons the training data
     ('train8', (5851, 784)),
     ('train9', (5949, 784))]
     """
-    batchdata = concatenate([mnist[m] for m in mnist if "train" in m])
+    batchdata = concatenate([data[m] for m in data if "train" in m])
     batchdata = array(batchdata, dtype=float32) / 255
     random.seed(0)
     random.shuffle(batchdata)
@@ -47,3 +48,25 @@ def run(batchsize=100): # for performance reasons the training data
     """
     return batchdata
 
+def usps(batchsize=100): # for performance reasons the training data
+                         # is partitioned in matrixes
+    filename = "zip.train.gz"
+    print "Loading '%s'" % filename
+    batchdata = []
+    for line in gzip.open(filename).readlines():
+        row = line.strip().split(" ")
+        number, picture = int(row[0]), map(float, row[1:])
+        # normalize inputs
+        inputs = picture # in range [-1, 1]
+        # digitalize outputs
+        #targets = [(i == number) and 1 or -1 for i in range(10)]
+        batchdata.append(inputs)
+    batchdata = (array(batchdata) + 1) / 2
+    random.seed(0)
+    random.shuffle(batchdata)
+    batchdata.resize(batchsize, (batchdata.shape[0]/batchsize)+1, batchdata.shape[1])
+    """
+    >>> batchdata.shape
+    (100, 601, 784)
+    """
+    return batchdata
