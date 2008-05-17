@@ -22,12 +22,12 @@ import numpy.matlib as m
 # not been tested to the degree that would be advisable in any important
 # application.  All use of these programs is entirely at the user's own risk.
 
-epsilonw  = 0.1 # Learning rate for weights
-epsilonvb = 0.1 # Learning rate for biases of visible units
-epsilonhb = 0.1 # Learning rate for biases of hidden units
+eps_w  = 0.1 # Learning rate for weights
+eps_vb = 0.1 # Learning rate for biases of visible units
+eps_hb = 0.1 # Learning rate for biases of hidden units
 weightcost = 0.0002
-initialmomentum  = 0.5
-finalmomentum    = 0.9
+initial_momentum  = 0.5
+final_momentum    = 0.9
 
 def run(maxepoch, numhid, batchdata, restart):
     # This program trains Restricted Boltzmann Machine in which
@@ -47,17 +47,17 @@ def run(maxepoch, numhid, batchdata, restart):
         epoch = 0
 
         # Initializing symmetric weights and biases.
-        vishid     = 0.1*random.randn(numdims, numhid)
-        hidbiases  = m.zeros((1, numhid))
-        visbiases  = m.zeros((1, numdims))
+        weights   = 0.1*random.randn(numdims, numhid)
+        bias_hid  = m.zeros((1, numhid))
+        bias_vis  = m.zeros((1, numdims))
 
         poshidprobs = m.zeros((numcases, numhid))
         neghidprobs = m.zeros((numcases, numhid))
         posprods    = m.zeros((numdims, numhid))
         negprods    = m.zeros((numdims, numhid))
-        vishidinc  = m.zeros((numdims, numhid))
-        hidbiasinc = m.zeros((1, numhid))
-        visbiasinc = m.zeros((1, numdims))
+        delta_weights  = m.zeros((numdims, numhid))
+        delta_bias_hid = m.zeros((1, numhid))
+        delta_bias_vis = m.zeros((1, numdims))
         batchposhidprobs = zeros((numbatches, numcases, numhid))
 
     for epoch in range(epoch, maxepoch):
@@ -68,18 +68,18 @@ def run(maxepoch, numhid, batchdata, restart):
 
             ######### START POSITIVE PHASE ###################################################
             data = mat(batchdata[batch])
-            poshidprobs = 1.0 / (1.0 + exp(-data*vishid - tile(hidbiases, (numcases, 1))))
+            poshidprobs = 1.0 / (1.0 + exp(-data*weights - tile(bias_hid, (numcases, 1))))
             batchposhidprobs[batch] = poshidprobs
             posprods    = data.T * poshidprobs
             poshidact   = sum(poshidprobs)
             posvisact = sum(data)
 
             ######### END OF POSITIVE PHASE  #################################################
-            poshidstates = poshidprobs > random.rand(numcases, numhid);
+            poshidstates = poshidprobs > random.rand(numcases, numhid) # in place of a data shuffle
 
             ######### START NEGATIVE PHASE  ##################################################
-            negdata = 1.0 / (1.0 + exp(-poshidstates*vishid.T - tile(visbiases, (numcases, 1))))
-            neghidprobs = 1.0 / (1.0 + exp(-negdata*vishid - tile(hidbiases, (numcases, 1))))
+            negdata = 1.0 / (1.0 + exp(-poshidstates*weights.T - tile(bias_vis, (numcases, 1))))
+            neghidprobs = 1.0 / (1.0 + exp(-negdata*weights - tile(bias_hid, (numcases, 1))))
             negprods  = negdata.T * neghidprobs
             neghidact = sum(neghidprobs)
             negvisact = sum(negdata)
@@ -89,19 +89,19 @@ def run(maxepoch, numhid, batchdata, restart):
             errsum = err + errsum
 
             if epoch > 5:
-                momentum = finalmomentum
+                momentum = final_momentum
             else:
-                momentum = initialmomentum
+                momentum = initial_momentum
 
             ######### UPDATE WEIGHTS AND BIASES ###############################################
-            vishidinc = momentum*vishidinc + \
-                        epsilonw*( (posprods-negprods)/numcases - weightcost*vishid)
-            visbiasinc = momentum*visbiasinc + (epsilonvb/numcases)*(posvisact-negvisact)
-            hidbiasinc = momentum*hidbiasinc + (epsilonhb/numcases)*(poshidact-neghidact)
+            delta_weights = momentum*delta_weights + \
+                        eps_w*( (posprods-negprods)/numcases - weightcost*weights)
+            delta_bias_vis = momentum*delta_bias_vis + (eps_vb/numcases)*(posvisact-negvisact)
+            delta_bias_hid = momentum*delta_bias_hid + (eps_hb/numcases)*(poshidact-neghidact)
 
-            vishid = vishid + vishidinc
-            visbiases = visbiases + visbiasinc
-            hidbiases = hidbiases + hidbiasinc
+            weights = weights + delta_weights
+            bias_vis = bias_vis + delta_bias_vis
+            bias_hid = bias_hid + delta_bias_hid
 
             ################ END OF UPDATES ####################################################
 
