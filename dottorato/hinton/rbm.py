@@ -22,14 +22,14 @@ import numpy.matlib as m
 # not been tested to the degree that would be advisable in any important
 # application.  All use of these programs is entirely at the user's own risk.
 
-eps_w  = 0.1 # Learning rate for weights
-eps_vb = 0.1 # Learning rate for biases of visible units
-eps_hb = 0.1 # Learning rate for biases of hidden units
+def_eps_w  = 0.1 # Learning rate for weights
+def_eps_vb = 0.1 # Learning rate for biases of visible units
+def_eps_hb = 0.1 # Learning rate for biases of hidden units
 weightcost = 0.0002
 initial_momentum  = 0.5
 final_momentum    = 0.9
 
-def run(maxepoch, numhid, batchdata, restart):
+def run(maxepoch, numhid, batchdata, restart, squash='sigmoid'):
     # This program trains Restricted Boltzmann Machine in which
     # visible, binary, stochastic pixels are connected to
     # hidden, binary, stochastic feature detectors using symmetrically
@@ -39,9 +39,19 @@ def run(maxepoch, numhid, batchdata, restart):
     # numhid    -- number of hidden units
     # batchdata -- the data that is divided into batches (numcases numdims numbatches)
     # restart   -- set to 1 if learning starts from beginning
+    # type      -- sigmoid or linear
 
     numbatches, numcases, numdims = shape(batchdata)
-
+    
+    if squash == 'linear':
+        eps_w = def_eps_w / 100
+        eps_vb = def_eps_vb / 100
+        eps_hb = def_eps_hb / 100
+    else:
+        eps_w = def_eps_w
+        eps_vb = def_eps_vb
+        eps_hb = def_eps_hb 
+    
     if restart == 1:
         restart = 0
         epoch = 0
@@ -58,6 +68,8 @@ def run(maxepoch, numhid, batchdata, restart):
         delta_weights  = m.zeros((numdims, numhid))
         delta_bias_hid = m.zeros((1, numhid))
         delta_bias_vis = m.zeros((1, numdims))
+        if squash == 'linear':
+            delta_sigma = m.zeros((1, numhid))
         batchposhidprobs = zeros((numbatches, numcases, numhid))
 
     for epoch in range(epoch, maxepoch):
@@ -68,7 +80,10 @@ def run(maxepoch, numhid, batchdata, restart):
 
             ######### START POSITIVE PHASE ###################################################
             data = mat(batchdata[batch])
-            poshidprobs = 1.0 / (1.0 + exp(-data*weights - tile(bias_hid, (numcases, 1))))
+            if squash == 'linear':
+                poshidprobs = (data*weights) + tile(bias_hid, (numcases, 1))
+            else:
+                poshidprobs = 1.0 / (1.0 + exp(-data*weights - tile(bias_hid, (numcases, 1))))
             batchposhidprobs[batch] = poshidprobs
             posprods    = data.T * poshidprobs
             poshidact   = sum(poshidprobs)
@@ -79,7 +94,10 @@ def run(maxepoch, numhid, batchdata, restart):
 
             ######### START NEGATIVE PHASE  ##################################################
             negdata = 1.0 / (1.0 + exp(-poshidstates*weights.T - tile(bias_vis, (numcases, 1))))
-            neghidprobs = 1.0 / (1.0 + exp(-negdata*weights - tile(bias_hid, (numcases, 1))))
+            if squash == 'linear':
+                neghidprobs = (negdata*weights) + tile(bias_hid, (numcases, 1))
+            else:
+                neghidprobs = 1.0 / (1.0 + exp(-negdata*weights - tile(bias_hid, (numcases, 1))))
             negprods  = negdata.T * neghidprobs
             neghidact = sum(neghidprobs)
             negvisact = sum(negdata)
