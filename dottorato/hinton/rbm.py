@@ -95,7 +95,7 @@ def run(maxepoch, numhid, batchdata, restart):
 
             ######### UPDATE WEIGHTS AND BIASES ###############################################
             delta_weights = momentum*delta_weights + \
-                        eps_w*( (posprods-negprods)/numcases - weightcost*weights)
+                                     eps_w*((posprods-negprods)/numcases - weightcost*weights)
             delta_bias_vis = momentum*delta_bias_vis + (eps_vb/numcases)*(posvisact-negvisact)
             delta_bias_hid = momentum*delta_bias_hid + (eps_hb/numcases)*(poshidact-neghidact)
 
