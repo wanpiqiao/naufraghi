@@ -10,7 +10,6 @@ import numpy.matlib as m
 
 import makebatches
 import rbm
-import rbmhidlinear
 
 # Version 1.000
 #
@@ -50,7 +49,7 @@ numbatches, numcases, numdims = shape(batchdata)
 print 'Pretraining Layer 1 with RBM: %d-%d' % (numdims, numhid)
 restart = 1
 layer = rbm.run(maxepoch, numhid, batchdata, restart)
-hidrecbiases = layer["hidbiases"]
+hidrecbiases = layer["bias_hid"]
 #save(mnistvh, vishid, hidrecbiases, visbiases)
 
 print 'Pretraining Layer 2 with RBM: %d-%d' % (numhid, numpen)
@@ -58,9 +57,9 @@ batchdata = layer["batchposhidprobs"]
 numhid = numpen
 restart = 1
 layer = rbm.run(maxepoch, numhid, batchdata, restart)
-hidpen = layer["vishid"]
-penrecbiases = layer["hidbiases"]
-hidgenbiases = layer["visbiases"]
+hidpen = layer["weights"]
+penrecbiases = layer["bias_hid"]
+hidgenbiases = layer["bias_vis"]
 #save(mnisthp, hidpen, penrecbiases, hidgenbiases)
 
 print 'Pretraining Layer 3 with RBM: %d-%d' % (numpen, numpen2)
@@ -68,19 +67,19 @@ batchdata = layer["batchposhidprobs"]
 numhid = numpen2
 restart = 1
 layer = rbm.run(maxepoch, numhid, batchdata, restart)
-hidpen2 = layer["vishid"]
-penrecbiases2 = layer["hidbiases"]
-hidgenbiases2 = layer["visbiases"]
+hidpen2 = layer["weights"]
+penrecbiases2 = layer["bias_hid"]
+hidgenbiases2 = layer["bias_vis"]
 #save(mnisthp2, hidpen2, penrecbiases2, hidgenbiases2)
 
 print 'Pretraining Layer 4 with RBM: %d-%d' % (numpen2, numopen)
 batchdata = layer["batchposhidprobs"]
 numhid = numopen
 restart = 1
-layer = rbmhidlinear.run(maxepoch, numhid, batchdata, restart)
-hidtop = layer["vishid"]
-toprecbiases = layer["hidbiases"]
-topgenbiases = layer["visbiases"]
+layer = rbm.run(maxepoch, numhid, batchdata, restart, 'linear')
+hidtop = layer["weights"]
+toprecbiases = layer["bias_hid"]
+topgenbiases = layer["bias_vis"]
 #save(mnistpo, hidtop, toprecbiases, topgenbiases)
 
 #backprop.run()
