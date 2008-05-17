@@ -47,16 +47,14 @@ batchdata = makebatches.usps()
 numbatches, numcases, numdims = shape(batchdata)
 
 print 'Pretraining Layer 1 with RBM: %d-%d' % (numdims, numhid)
-restart = 1
-layer = rbm.run(maxepoch, numhid, batchdata, restart)
+layer = rbm.run(maxepoch, numhid, batchdata)
 hidrecbiases = layer["bias_hid"]
 #save(mnistvh, vishid, hidrecbiases, visbiases)
 
 print 'Pretraining Layer 2 with RBM: %d-%d' % (numhid, numpen)
 batchdata = layer["batchposhidprobs"]
 numhid = numpen
-restart = 1
-layer = rbm.run(maxepoch, numhid, batchdata, restart)
+layer = rbm.run(maxepoch, numhid, batchdata)
 hidpen = layer["weights"]
 penrecbiases = layer["bias_hid"]
 hidgenbiases = layer["bias_vis"]
@@ -65,8 +63,7 @@ hidgenbiases = layer["bias_vis"]
 print 'Pretraining Layer 3 with RBM: %d-%d' % (numpen, numpen2)
 batchdata = layer["batchposhidprobs"]
 numhid = numpen2
-restart = 1
-layer = rbm.run(maxepoch, numhid, batchdata, restart)
+layer = rbm.run(maxepoch, numhid, batchdata)
 hidpen2 = layer["weights"]
 penrecbiases2 = layer["bias_hid"]
 hidgenbiases2 = layer["bias_vis"]
@@ -75,8 +72,7 @@ hidgenbiases2 = layer["bias_vis"]
 print 'Pretraining Layer 4 with RBM: %d-%d' % (numpen2, numopen)
 batchdata = layer["batchposhidprobs"]
 numhid = numopen
-restart = 1
-layer = rbm.run(maxepoch, numhid, batchdata, restart, 'linear')
+layer = rbm.run(maxepoch, numhid, batchdata, 'linear')
 hidtop = layer["weights"]
 toprecbiases = layer["bias_hid"]
 topgenbiases = layer["bias_vis"]

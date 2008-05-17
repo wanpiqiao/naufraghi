@@ -29,7 +29,7 @@ weightcost = 0.0002
 initial_momentum  = 0.5
 final_momentum    = 0.9
 
-def run(maxepoch, numhid, batchdata, restart, squash='sigmoid'):
+def run(maxepoch, numhid, batchdata, linear=False):
     # This program trains Restricted Boltzmann Machine in which
     # visible, binary, stochastic pixels are connected to
     # hidden, binary, stochastic feature detectors using symmetrically
@@ -43,7 +43,7 @@ def run(maxepoch, numhid, batchdata, restart, squash='sigmoid'):
 
     numbatches, numcases, numdims = shape(batchdata)
     
-    if squash == 'linear':
+    if linear:
         eps_w = def_eps_w / 100
         eps_vb = def_eps_vb / 100
         eps_hb = def_eps_hb / 100
@@ -51,40 +51,36 @@ def run(maxepoch, numhid, batchdata, restart, squash='sigmoid'):
         eps_w = def_eps_w
         eps_vb = def_eps_vb
         eps_hb = def_eps_hb 
-    
-    if restart == 1:
-        restart = 0
-        epoch = 0
 
-        # Initializing symmetric weights and biases.
-        weights   = 0.1*random.randn(numdims, numhid)
-        bias_hid  = m.zeros((1, numhid))
-        bias_vis  = m.zeros((1, numdims))
+    # Initializing symmetric weights and biases.
+    weights   = 0.1*random.randn(numdims, numhid)
+    bias_hid  = m.zeros((1, numhid))
+    bias_vis  = m.zeros((1, numdims))
 
-        poshidprobs = m.zeros((numcases, numhid))
-        neghidprobs = m.zeros((numcases, numhid))
-        posprods    = m.zeros((numdims, numhid))
-        negprods    = m.zeros((numdims, numhid))
-        delta_weights  = m.zeros((numdims, numhid))
-        delta_bias_hid = m.zeros((1, numhid))
-        delta_bias_vis = m.zeros((1, numdims))
-        if squash == 'linear':
-            delta_sigma = m.zeros((1, numhid))
-        batchposhidprobs = zeros((numbatches, numcases, numhid))
+    poshidprobs = m.zeros((numcases, numhid))
+    neghidprobs = m.zeros((numcases, numhid))
+    posprods    = m.zeros((numdims, numhid))
+    negprods    = m.zeros((numdims, numhid))
+    delta_weights  = m.zeros((numdims, numhid))
+    delta_bias_hid = m.zeros((1, numhid))
+    delta_bias_vis = m.zeros((1, numdims))
+    if linear:
+        delta_sigma = m.zeros((1, numhid))
+    batchposhidprobs = zeros((numbatches, numcases, numhid))
 
-    for epoch in range(epoch, maxepoch):
+    for epoch in range(maxepoch):
         print 'epoch %d' % epoch
-        errsum = 0
-        for batch in range(0, numbatches):
+        errsum = 0.0
+        last_epoch = epoch == maxepoch - 1
+        for batch in range(numbatches):
             print 'epoch %d batch %d/%d' % (epoch, batch, numbatches)
 
             ######### START POSITIVE PHASE ###################################################
             data = mat(batchdata[batch])
-            if squash == 'linear':
+            if linear:
                 poshidprobs = (data*weights) + tile(bias_hid, (numcases, 1))
             else:
                 poshidprobs = 1.0 / (1.0 + exp(-data*weights - tile(bias_hid, (numcases, 1))))
-            batchposhidprobs[batch] = poshidprobs
             posprods    = data.T * poshidprobs
             poshidact   = sum(poshidprobs)
             posvisact = sum(data)
@@ -94,7 +90,7 @@ def run(maxepoch, numhid, batchdata, restart, squash='sigmoid'):
 
             ######### START NEGATIVE PHASE  ##################################################
             negdata = 1.0 / (1.0 + exp(-poshidstates*weights.T - tile(bias_vis, (numcases, 1))))
-            if squash == 'linear':
+            if linear:
                 neghidprobs = (negdata*weights) + tile(bias_hid, (numcases, 1))
             else:
                 neghidprobs = 1.0 / (1.0 + exp(-negdata*weights - tile(bias_hid, (numcases, 1))))
@@ -122,6 +118,8 @@ def run(maxepoch, numhid, batchdata, restart, squash='sigmoid'):
             bias_hid = bias_hid + delta_bias_hid
 
             ################ END OF UPDATES ####################################################
+            if last_epoch:
+                batchposhidprobs[batch] = poshidprobs
 
         print '### epoch %4d error %6.1f' % (epoch, errsum)
     # Matlab style return...
