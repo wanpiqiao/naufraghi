@@ -39,10 +39,10 @@ def run(maxepoch, numhid, batchdata, linear=False):
     # numhid    -- number of hidden units
     # batchdata -- the data that is divided into batches (numcases numdims numbatches)
     # restart   -- set to 1 if learning starts from beginning
-    # type      -- sigmoid or linear
+    # linear    -- default = False == sigmoid
 
     numbatches, numcases, numdims = shape(batchdata)
-    
+
     if linear:
         eps_w = def_eps_w / 100
         eps_vb = def_eps_vb / 100
@@ -50,7 +50,7 @@ def run(maxepoch, numhid, batchdata, linear=False):
     else:
         eps_w = def_eps_w
         eps_vb = def_eps_vb
-        eps_hb = def_eps_hb 
+        eps_hb = def_eps_hb
 
     # Initializing symmetric weights and biases.
     weights   = 0.1*random.randn(numdims, numhid)
