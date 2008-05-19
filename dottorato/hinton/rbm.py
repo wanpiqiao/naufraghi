@@ -5,8 +5,8 @@
 import sys
 import time
 
-from numpy import *
-import numpy.matlib as m
+import numpy as N
+from numpy import matlib
 
 # Version 1.000
 #
@@ -41,7 +41,7 @@ def run(maxepoch, numhid, batchdata, linear=False):
     # restart   -- set to 1 if learning starts from beginning
     # linear    -- default = False == sigmoid
 
-    numbatches, numcases, numdims = shape(batchdata)
+    numbatches, numcases, numdims = N.shape(batchdata)
 
     if linear:
         eps_w = def_eps_w / 100
@@ -53,20 +53,20 @@ def run(maxepoch, numhid, batchdata, linear=False):
         eps_hb = def_eps_hb
 
     # Initializing symmetric weights and biases.
-    weights   = 0.1*random.randn(numdims, numhid)
-    bias_hid  = m.zeros((1, numhid))
-    bias_vis  = m.zeros((1, numdims))
+    weights   = N.mat(0.1*N.random.randn(numdims, numhid))
+    bias_hid  = matlib.zeros((1, numhid))
+    bias_vis  = matlib.zeros((1, numdims))
 
-    poshidprobs = m.zeros((numcases, numhid))
-    neghidprobs = m.zeros((numcases, numhid))
-    posprods    = m.zeros((numdims, numhid))
-    negprods    = m.zeros((numdims, numhid))
-    delta_weights  = m.zeros((numdims, numhid))
-    delta_bias_hid = m.zeros((1, numhid))
-    delta_bias_vis = m.zeros((1, numdims))
+    poshidprobs = matlib.zeros((numcases, numhid))
+    neghidprobs = matlib.zeros((numcases, numhid))
+    posprods    = matlib.zeros((numdims, numhid))
+    negprods    = matlib.zeros((numdims, numhid))
+    delta_weights  = matlib.zeros((numdims, numhid))
+    delta_bias_hid = matlib.zeros((1, numhid))
+    delta_bias_vis = matlib.zeros((1, numdims))
     if linear:
-        delta_sigma = m.zeros((1, numhid))
-    outprobs = zeros((numbatches, numcases, numhid))
+        delta_sigma = matlib.zeros((1, numhid))
+    outprobs = N.zeros((numbatches, numcases, numhid))
 
     for epoch in range(maxepoch):
         print 'epoch %d' % epoch
@@ -76,30 +76,30 @@ def run(maxepoch, numhid, batchdata, linear=False):
             print 'epoch %d batch %d/%d' % (epoch, batch, numbatches)
 
             ######### START POSITIVE PHASE ###################################################
-            data = mat(batchdata[batch])
+            data = N.mat(batchdata[batch])
             if linear:
                 poshidprobs = (data*weights) + tile(bias_hid, (numcases, 1))
             else:
-                poshidprobs = 1.0 / (1.0 + exp(-data*weights - tile(bias_hid, (numcases, 1))))
+                poshidprobs = 1.0 / (1.0 + N.exp(-data*weights - N.tile(bias_hid, (numcases, 1))))
             posprods  = data.T * poshidprobs
-            poshidact = sum(poshidprobs)
-            posvisact = sum(data)
+            poshidact = N.sum(poshidprobs)
+            posvisact = N.sum(data)
 
             ######### END OF POSITIVE PHASE  #################################################
-            poshidstates = poshidprobs > random.rand(numcases, numhid) # in place of a data shuffle
+            poshidstates = poshidprobs > N.random.rand(numcases, numhid) # in place of a data shuffle
 
             ######### START NEGATIVE PHASE  ##################################################
-            negdata = 1.0 / (1.0 + exp(-poshidstates*weights.T - tile(bias_vis, (numcases, 1))))
+            negdata = 1.0 / (1.0 + N.exp(-poshidstates*weights.T - N.tile(bias_vis, (numcases, 1))))
             if linear:
-                neghidprobs = (negdata*weights) + tile(bias_hid, (numcases, 1))
+                neghidprobs = (negdata*weights) + N.tile(bias_hid, (numcases, 1))
             else:
-                neghidprobs = 1.0 / (1.0 + exp(-negdata*weights - tile(bias_hid, (numcases, 1))))
+                neghidprobs = 1.0 / (1.0 + N.exp(-negdata*weights - N.tile(bias_hid, (numcases, 1))))
             negprods  = negdata.T * neghidprobs
-            neghidact = sum(neghidprobs)
-            negvisact = sum(negdata)
+            neghidact = N.sum(neghidprobs)
+            negvisact = N.sum(negdata)
 
             ######### END OF NEGATIVE PHASE ##################################################
-            err = sum(sum( array(data-negdata)**2 ))
+            err = N.sum(N.sum( N.array(data-negdata)**2 ))
             errsum = err + errsum
 
             if epoch > 5:

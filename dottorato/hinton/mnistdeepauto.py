@@ -5,8 +5,8 @@
 import sys
 import time
 
-from numpy import *
-import numpy.matlib as m
+import numpy as N
+from numpy import matlib
 
 import makebatches
 import rbm
@@ -25,7 +25,7 @@ import rbm
 # not been tested to the degree that would be advisable in any important
 # application.  All use of these programs is entirely at the user's own risk.
 
-start_time = time.time() 
+start_time = time.time()
 # This program pretrains a deep autoencoder for MNIST dataset
 # You can set the maximum number of epochs for pretraining each layer
 # and you can set the architecture of the multilayer net.
@@ -44,7 +44,7 @@ print 'Pretraining a deep autoencoder.'
 print 'The Science paper used 50 epochs. This uses %3d' % maxepoch
 
 batchdata = makebatches.usps()
-numbatches, numcases, numdims = shape(batchdata)
+numbatches, numcases, numdims = N.shape(batchdata)
 
 print 'Pretraining Layer 1 with RBM: %d-%d' % (numdims, numhid)
 layer = rbm.run(maxepoch, numhid, batchdata)
