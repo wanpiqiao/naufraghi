@@ -50,7 +50,7 @@ from numpy import *
 class RBM:
     pass
 
-def train_rbm(X, h=20, type='sigmoid', epsilon=0.1, max_iter=100):
+def train_rbm(X, numhid=20, type='sigmoid', epsilon=0.1, max_iter=100):
 
     # Important parameters
     initial_momentum = 0.5     # momentum for first five iterations
@@ -60,11 +60,11 @@ def train_rbm(X, h=20, type='sigmoid', epsilon=0.1, max_iter=100):
     # Initialize some variables
     n, v = shape(X)
     batch_size = 1 + round(n / 20) # numbatches... tune it for you system/dataset
-    W = random.randn(v, h) * 0.1
-    bias_hid = matlib.zeros((1, hI)
+    W = random.randn(v, numhid) * 0.1
+    bias_hid = matlib.zeros((1, numhid)
     bias_vis = matlib.zeros((1, v))
-    deltaW = matlib.zeros((v, h))
-    deltaBias_hid = matlib.zeros((1, h))
+    deltaW = matlib.zeros((v, numhid))
+    deltaBias_hid = matlib.zeros((1, numhid))
     deltaBias_vis = matlib.zeros((1, v))
     
     # Main loop
@@ -105,7 +105,7 @@ def train_rbm(X, h=20, type='sigmoid', epsilon=0.1, max_iter=100):
                     hid2 = negdata * W + tile(bias_hid, (batch_size. 1))
 
                 # Now compute the weights update (= contrastive divergence)
-                posprods = hid1.T * data    # one can also switch the product and
+                posprods = hid1.T * data    # one can also swap the product and
                 negprods = hid2.T * negdata # remove the traspose here ---------------------\/
                 deltaW = momentum * deltaW + (epsilon / batch_size) * ((posprods - negprods).T - (weight_cost * W))
                 deltaBias_hid   = momentum * deltaBias_hid   + (epsilon / batch_size) * (sum(hid1, 1) - sum(hid2, 1))
@@ -113,13 +113,13 @@ def train_rbm(X, h=20, type='sigmoid', epsilon=0.1, max_iter=100):
                 
                 # Divide by number of elements for linear activations
                 if type != 'sigmoid':
-                    deltaW = deltaW                   ./ len(deltaW)
-                    deltaBias_hid = deltaBias_hid     ./ len(deltaBias_hid)
-                    deltaBias_vis = deltaBias_vis ./ len(deltaBias_vis)
+                    deltaW = deltaW               ./ (v * numhid)
+                    deltaBias_hid = deltaBias_hid ./ numhid
+                    deltaBias_vis = deltaBias_vis ./ v
                 
                 # Update the network weights
-                W           = W          + deltaW
-                bias_hid    = bias_hid   + deltaBias_hid
+                W         = W        + deltaW
+                bias_hid  = bias_hid + deltaBias_hid
                 bias_vis  = bias_vis + deltaBias_vis
     
     # Return RBM    
