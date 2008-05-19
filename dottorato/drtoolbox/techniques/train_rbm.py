@@ -7,7 +7,8 @@ from __future__ import division
 import sys
 import time
 
-from numpy import *
+import numpy as N
+from numpy import matlib
 
 #TRAIN_RBM Trains a Restricted Boltzmann Machine using contrastive divergence
 #
@@ -60,7 +61,7 @@ def train_rbm(X, numhid=20, type='sigmoid', epsilon=0.1, max_iter=100):
     # Initialize some variables
     n, v = shape(X)
     batch_size = 1 + round(n / 20) # numbatches... tune it for you system/dataset
-    W = random.randn(v, numhid) * 0.1
+    W = N.mat(N.random.randn(v, numhid) * 0.1)
     bias_hid = matlib.zeros((1, numhid)
     bias_vis = matlib.zeros((1, v))
     deltaW = matlib.zeros((v, numhid))
@@ -81,7 +82,7 @@ def train_rbm(X, numhid=20, type='sigmoid', epsilon=0.1, max_iter=100):
             momentum = final_momentum
         
         # Run for all mini-batches (= Gibbs sampling step 0)
-        ind = random.shuffle(arange(n))
+        ind = N.random.shuffle(arange(n))
         for batch in range(0, n, batch_size):
             
             if batch + batch_size <= n:
@@ -91,29 +92,29 @@ def train_rbm(X, numhid=20, type='sigmoid', epsilon=0.1, max_iter=100):
 
                 # Compute probabilities for hidden nodes (= Gibbs sampling step 0)
                 if type == 'sigmoid':
-                    hid1 = 1.0 / (1.0 + exp(-(data * W + tile(bias_hid, (batch_size, 1)))))
+                    hid1 = 1.0 / (1.0 + N.exp(-(data * W + N.tile(bias_hid, (batch_size, 1)))))
                 else:
-                    hid1 = data * W + tile(bias_hid, (batch_size, 1))
+                    hid1 = data * W + N.tile(bias_hid, (batch_size, 1))
 
                 # Compute probabilities for visible nodes (= Gibbs sampling step 1)
-                negdata = 1.0 / (1.0 + exp(-(hid1 * W.T + tile(bias_vis, (batch_size, 1)))))
+                negdata = 1.0 / (1.0 + N.exp(-(hid1 * W.T + N.tile(bias_vis, (batch_size, 1)))))
 
                 # Compute probabilities for hidden nodes (= Gibbs sampling step 1)
-                if tye == 'sigmoid':
-                    hid2 = 1.0 / (1.0 + exp(-(negdata * W + tile(bias_hid, (batch_size, 1)))))
+                if type == 'sigmoid':
+                    hid2 = 1.0 / (1.0 + N.exp(-(negdata * W + N.tile(bias_hid, (batch_size, 1)))))
                 else:
-                    hid2 = negdata * W + tile(bias_hid, (batch_size. 1))
+                    hid2 = negdata * W + N.tile(bias_hid, (batch_size. 1))
 
                 # Now compute the weights update (= contrastive divergence)
                 posprods = hid1.T * data    # one can also swap the product and
                 negprods = hid2.T * negdata # remove the traspose here ---------------------\/
                 deltaW = momentum * deltaW + (epsilon / batch_size) * ((posprods - negprods).T - (weight_cost * W))
-                deltaBias_hid   = momentum * deltaBias_hid   + (epsilon / batch_size) * (sum(hid1, 1) - sum(hid2, 1))
-                deltaBias_vis = momentum * deltaBias_vis + (epsilon / batch_size) * (sum(data, 1) - sum(negdata, 1))
+                deltaBias_hid   = momentum * deltaBias_hid   + (epsilon / batch_size) * (N.sum(hid1, 1) - N.sum(hid2, 1))
+                deltaBias_vis = momentum * deltaBias_vis + (epsilon / batch_size) * (N.sum(data, 1) - N.sum(negdata, 1))
                 
                 # Divide by number of elements for linear activations
                 if type != 'sigmoid':
-                    deltaW = deltaW               ./ (v * numhid)
+                    deltaW        = deltaW        ./ (v * numhid)
                     deltaBias_hid = deltaBias_hid ./ numhid
                     deltaBias_vis = deltaBias_vis ./ v
                 

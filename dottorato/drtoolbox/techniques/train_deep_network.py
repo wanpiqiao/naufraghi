@@ -7,7 +7,8 @@ from __future__ import division
 import sys
 import time
 
-from numpy import *
+import numpy as N
+from numpy import matlib
 
 #TRAIN_DEEP_NETWORK Trains a deep (multi-layer) network using RBMs
 #
@@ -36,81 +37,66 @@ from numpy import *
 # (C) Laurens van der Maaten
 # Maastricht University, 2007
 
-def train_deep_network(X, layers, finetune, targets):
-
-    if ~exist('layers', 'var') || isempty(layers)
-        layers = [20 10];
-    end
-    if ~exist('finetune', 'var') || isempty(finetune)
-        finetune = 'None';
-    end
-    disp(' ');
+def train_deep_network(origX, layers, finetune=None, targets=None):
+    if finetune and not targets:
+        raise ValueError("target must be != None with finetune != None")
     
     # Initialize some variables
-    no_layers = length(layers);
-    network = cell(1, no_layers);
-    X = X -  min(min(X));
-    X = X ./ max(max(X));
-    origX = X;
+    num_layers = len(layers)
+    network = [None] * len(num_layers)
+    X = mat(origX)
+    X = X -  N.min(X)
+    X = X / N.max(X)
             
     # Learn layer-by-layer to get an initial network configuration
-    for i=1:no_layers
+    for i in range(num_layers):
         
-        disp(['Training layer ' num2str(i) '...']);
+        print 'Training layer', i, '...'
         
         # Train current layer
-        if i ~= no_layers
-            network{i} = train_rbm(X, layers(i), 'sigmoid');
-        else
-            if ~strcmp(finetune, 'Backprop')
-                network{i} = train_rbm(X, layers(i), 'linear');
-            else
-                network{i}.W = randn([layers(i - 1) layers(i)]) * 0.1;
-                network{i}.bias_upW = zeros([1 layers(i)]);
-                network{i}.bias_downW = zeros([1 layers(i - 1)]);
-                network{i}.type = 'linear';
-            end
-        end
+        if i != len(layers) - 1:
+            network[i] = train_rbm(X, layers[i], 'sigmoid')
+        else:
+            if finetune != 'Backprop':
+                network[i] = train_rbm(X, layers[i], 'linear')
+            else:
+                network[i].W = N.mat(N.random.randn(layers[i - 1], layers[i]) * 0.1)
+                network[i].bias_upW = matlib.zeros((1, layers[i]))
+                network[i].bias_downW = matlib.zeros((1, layers[i - 1]))
+                network[i].type = 'linear'
         
         # Transform data using learned weights
-        if i ~= no_layers
-            X = 1 ./ (1 + exp(-(X * network{i}.W + repmat(network{i}.bias_upW, [size(X, 1) 1]))));
-        end
-    end
+        if i != len(layers) - 1:
+            X = 1.0 / (1.0 + N.exp(-(X * network[i].W + N.tile(network[i].bias_upW, (N.shape(X, 1), 1)))))
 
     # Perform finetuning if desired
-    switch finetune
+
+    if finetune == 'WakeSleep':
+        print 'Finetuning the network using the contrastive wake-sleep algorithm...'
+        network = wake_sleep(network, origX)
         
-        case 'WakeSleep'
-            disp('Finetuning the network using the contrastive wake-sleep algorithm...');
-            network = wake_sleep(network, origX); 
-            
-        case 'Autoencoder'
-            disp('Finetuning the autoencoder using backpropagation...');
-            no_layers = length(network);
-            for i=1:no_layers
-                network{2 * no_layers + 1 - i} = network{i};
-                network{i}.W = network{i}.W';
-                network{i}.bias = network{i}.bias_upW';
-                network{2 * no_layers + 1 - i}.bias = network{i}.bias_downW';
-            end
-            network{no_layers + 1}.type = 'sigmoid';
-            network = backprop(network, origX, origX);
-            
-        case 'Backprop'
-            disp('Finetuning the network using backpropagation...');
-            for i=1:length(network)
-                network{i}.W = network{i}.W';
-                network{i}.bias = network{i}.bias_upW';
-            end
-            network = backprop(network, origX, targets);
-            
-        case 'Unsupervised'
-            for i=1:length(network)
-                network{i}.W = network{i}.W';
-                network{i}.bias = network{i}.bias_upW';
-            end
-            
-        otherwise
-            # Do nothing
-    end
+    elif finetune == 'Autoencoder':
+        print 'Finetuning the autoencoder using backpropagation...'
+        for i in range(num_layers):
+            network[2 * no_layers + 1 - i] = network[i]
+            network[i].W = network[i].W.T
+            network[i].bias = network[i].bias_upW.T
+            network[2 * no_layers + 1 - i].bias = network[i].bias_downW.T
+        network[no_layers + 1].type = 'sigmoid'
+        network = backprop(network, origX, origX)
+        
+    elif finetune == 'Backprop':
+        print 'Finetuning the network using backpropagation...'
+        for i in range(num_layers):
+            network[i].W = network[i].W.T
+            network[i].bias = network[i].bias_upW.T
+        network = backprop(network, origX, targets)
+        
+    elif finetune == 'Unsupervised':
+        for i in range(num_layers):
+            network[i].W = network[i].W.T
+            network[i].bias = network[i].bias_upW.T
+        
+    else:
+        pass
+        # Do nothing
