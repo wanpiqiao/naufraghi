@@ -78,7 +78,7 @@ def run(maxepoch, numhid, batchdata, linear=False):
             ######### START POSITIVE PHASE ###################################################
             data = N.mat(batchdata[batch])
             if linear:
-                poshidprobs = (data*weights) + tile(bias_hid, (numcases, 1))
+                poshidprobs = (data*weights) + N.tile(bias_hid, (numcases, 1))
             else:
                 poshidprobs = 1.0 / (1.0 + N.exp(-data*weights - N.tile(bias_hid, (numcases, 1))))
             posprods  = data.T * poshidprobs
