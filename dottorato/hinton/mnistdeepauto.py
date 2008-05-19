@@ -25,7 +25,7 @@ import rbm
 # not been tested to the degree that would be advisable in any important
 # application.  All use of these programs is entirely at the user's own risk.
 
-
+start_time = time.time() 
 # This program pretrains a deep autoencoder for MNIST dataset
 # You can set the maximum number of epochs for pretraining each layer
 # and you can set the architecture of the multilayer net.
@@ -52,7 +52,7 @@ hidrecbiases = layer["bias_hid"]
 #save(mnistvh, vishid, hidrecbiases, visbiases)
 
 print 'Pretraining Layer 2 with RBM: %d-%d' % (numhid, numpen)
-batchdata = layer["batchposhidprobs"]
+batchdata = layer["outprobs"]
 numhid = numpen
 layer = rbm.run(maxepoch, numhid, batchdata)
 hidpen = layer["weights"]
@@ -61,7 +61,7 @@ hidgenbiases = layer["bias_vis"]
 #save(mnisthp, hidpen, penrecbiases, hidgenbiases)
 
 print 'Pretraining Layer 3 with RBM: %d-%d' % (numpen, numpen2)
-batchdata = layer["batchposhidprobs"]
+batchdata = layer["outprobs"]
 numhid = numpen2
 layer = rbm.run(maxepoch, numhid, batchdata)
 hidpen2 = layer["weights"]
@@ -70,13 +70,15 @@ hidgenbiases2 = layer["bias_vis"]
 #save(mnisthp2, hidpen2, penrecbiases2, hidgenbiases2)
 
 print 'Pretraining Layer 4 with RBM: %d-%d' % (numpen2, numopen)
-batchdata = layer["batchposhidprobs"]
+batchdata = layer["outprobs"]
 numhid = numopen
 layer = rbm.run(maxepoch, numhid, batchdata, 'linear')
 hidtop = layer["weights"]
 toprecbiases = layer["bias_hid"]
 topgenbiases = layer["bias_vis"]
 #save(mnistpo, hidtop, toprecbiases, topgenbiases)
+
+print "Pretraining done in", time.time() - start_time, "seconds"
 
 #backprop.run()
 

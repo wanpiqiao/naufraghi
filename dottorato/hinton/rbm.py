@@ -66,7 +66,7 @@ def run(maxepoch, numhid, batchdata, linear=False):
     delta_bias_vis = m.zeros((1, numdims))
     if linear:
         delta_sigma = m.zeros((1, numhid))
-    batchposhidprobs = zeros((numbatches, numcases, numhid))
+    outprobs = zeros((numbatches, numcases, numhid))
 
     for epoch in range(maxepoch):
         print 'epoch %d' % epoch
@@ -81,8 +81,8 @@ def run(maxepoch, numhid, batchdata, linear=False):
                 poshidprobs = (data*weights) + tile(bias_hid, (numcases, 1))
             else:
                 poshidprobs = 1.0 / (1.0 + exp(-data*weights - tile(bias_hid, (numcases, 1))))
-            posprods    = data.T * poshidprobs
-            poshidact   = sum(poshidprobs)
+            posprods  = data.T * poshidprobs
+            poshidact = sum(poshidprobs)
             posvisact = sum(data)
 
             ######### END OF POSITIVE PHASE  #################################################
@@ -108,7 +108,7 @@ def run(maxepoch, numhid, batchdata, linear=False):
                 momentum = initial_momentum
 
             ######### UPDATE WEIGHTS AND BIASES ###############################################
-            delta_weights = momentum*delta_weights + \
+            delta_weights  = momentum*delta_weights + \
                                      eps_w*((posprods-negprods)/numcases - weightcost*weights)
             delta_bias_vis = momentum*delta_bias_vis + (eps_vb/numcases)*(posvisact-negvisact)
             delta_bias_hid = momentum*delta_bias_hid + (eps_hb/numcases)*(poshidact-neghidact)
@@ -119,7 +119,7 @@ def run(maxepoch, numhid, batchdata, linear=False):
 
             ################ END OF UPDATES ####################################################
             if last_epoch:
-                batchposhidprobs[batch] = poshidprobs
+                outprobs[batch] = poshidprobs
 
         print '### epoch %4d error %6.1f' % (epoch, errsum)
     # Matlab style return...
