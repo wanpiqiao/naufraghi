@@ -5,16 +5,20 @@
 import sys
 import math
 import time
-import random
-
-import logging
 import pprint
 
-from cbplnn import *
+import numpy as np
+from numpy import matlib
+from numpy import random
 
-logging.getLogger().setLevel(logging.DEBUG)
+VERBOSE = 1
 
-nan = float("nan")
+def debug(message):
+    if VERBOSE > 1:
+        print "DEBUG:", message
+def info(message):
+    if VERBOSE > 0:
+        print "INFO:", message
 
 def print_exc_plus():
     """
@@ -60,7 +64,7 @@ def stats(patterns):
 def trace(s, sep='-'):
     s = (" %s " % s).center(70, sep)
     row = sep*len(s)
-    logging.info("\n".join([row, s, row]))
+    info("\n".join([row, s, row]))
 
 
 def assertEqual(a, b, message=None):
@@ -72,74 +76,105 @@ def assertEqual(a, b, message=None):
     if a != b:
         raise ValueError(message)
 
+def sigmoid(v):
+    return 1.0 / (1.0 + np.exp(-v))
+def sigmoid_deriv(v):
+    return np.multiply(v, (1.0 - v))
+
+
+class Layer:
+    def __init__(self, n_in, n_out, linear=False):
+        self.n_in = n_in
+        self.n_out = n_out
+        self.linear = linear
+        self.inputs = None
+        self.delta_inputs = None
+        self.weights = np.mat(np.random.randn(n_in, n_out)*0.1)
+        self.outputs = None
+        self.delta_outputs = None
+        self.targets = None
+        self.errors = None
+    def propagate(self, inputs):
+        self.inputs = inputs
+        #debug("inputs = %s\nweights = %s" % (self.inputs, self.weights))
+        self.outputs = sigmoid(self.inputs*self.weights)
+        #debug("outputs = %s" % self.outputs)
+        return self.outputs
+    def backPropagate(self, targets=None, delta_outputs=None):
+        if targets != None:
+            self.targets = targets
+            #debug("targets = %s\noutputs = %s" % (self.targets, self.outputs))
+            self.delta_outputs = np.multiply(sigmoid_deriv(self.outputs), (self.targets - self.outputs))
+            #debug("delta_outputs = %s" % self.delta_outputs)
+            self.errors = np.sum(np.mat(np.array(self.targets - self.outputs)**2), axis=1)
+            #debug("errors = %s" % self.errors)
+        elif delta_outputs != None:
+            self.delta_outputs = delta_outputs
+            #debug("delta_outputs = %s" % self.delta_outputs)
+        else:
+            raise ValueError("provide 'targets' or 'delta_outputs'")
+        #debug("inputs = %s\ndelta_outputs = %s\nweights.T = %s" % (self.inputs, self.delta_outputs, self.weights.T))
+        self.delta_inputs = np.multiply(sigmoid_deriv(self.inputs), (self.delta_outputs * self.weights.T))
+        #debug("delta_inputs = %s\nerrors = %s" % (self.delta_inputs, self.errors))
+        return self.delta_inputs
+    def updateWeights(self, learn):
+        #debug("inputs.T = %s\ndelta_outputs = %s" % (self.inputs.T, self.delta_outputs))
+        self.weights += learn * (self.inputs.T * self.delta_outputs)
+        #debug("weights = %s" % (self.weights))
+        return self.weights
+    def __repr__(self):
+        return "<Layer %d %d>" % (self.n_in, self.n_out)
+
 
 class ShallowNetwork:
-    def __init__(self, n_in, n_hid, n_out, loss=CrossEntropy, bias=True):
+    def __init__(self, n_in, n_hid, n_out, bias=True):
+        self.idx = 1
+        self.bias = bias
         if bias:
-            self.bias = [1.0]
-        else:
-            self.bias = []
-        n_in = n_in + len(self.bias)
+            n_in = n_in + 1
         random.seed(123)
         self.in_layer = Layer(n_in, n_hid)
-        self.out_layer = Layer(n_hid, n_out, loss)
-        self.in_layer.connect(self.out_layer)
+        self.out_layer = Layer(n_hid, n_out)
     def propagate(self, inputs):
         if self.bias:
-            inputs = v(list(inputs) + self.bias)
-        self.in_layer.propagate(inputs)
-        self.out_layer.propagate()
+            inputs = np.append(inputs, np.ones((inputs.shape[0],1)), axis=1)
+        #debug(" propagate IN ".center(70, "-"))
+        hiddens = self.in_layer.propagate(inputs)
+        #debug(" propagate OUT ".center(70, "-"))
+        outputs = self.out_layer.propagate(hiddens)
+        return outputs
     def backPropagate(self, targets):
-        err = self.out_layer.backPropagate(targets)
-        self.in_layer.backPropagate()
-        return err
+        #debug(" backPropagate OUT ".center(70, "-"))
+        delta_inputs = self.out_layer.backPropagate(targets=targets)
+        #debug(" backPropagate IN ".center(70, "-"))
+        self.in_layer.backPropagate(delta_outputs=delta_inputs)
+        return self.out_layer.errors
     def updateWeights(self, learn):
+        #debug(" updateWeights IN ".center(70, "-"))
         self.in_layer.updateWeights(learn)
+        #debug(" updateWeights OUT ".center(70, "-"))
         self.out_layer.updateWeights(learn)
-    def getOutputs(self, inputs):
-        self.propagate(inputs)
-        return self.out_layer.getOutputs()
     def train(self, patterns, iterations=1000, learn=0.05):
-        error = last_error = 0.0
-        for i in range(iterations):
+        info(" TRAIN ".center(70, "#"))
+        for k in range(iterations):
             random.shuffle(patterns)
-            last_error = error
             error = 0.0
-            for inputs, targets in patterns:
-                self.propagate(inputs)
-                error += self.backPropagate(targets)
+            for i in range(patterns.shape[0]):
+                self.propagate(patterns[:,:-self.idx])
+                error += self.backPropagate(patterns[:,-self.idx:])
                 self.updateWeights(learn)
-            if not i % (1+iterations/100):
-                logging.debug("iter(%s) error = %f" % (iterations - i, error))
-            if abs(error - last_error) < learn / (iterations * len(patterns)):
-                print "early exit, delta_error too small!!"
-                break
-            if error == nan:
-                raise ValueError(error)
-    def _test(self, patterns):
-        for inputs, targets in patterns:
-            res = self.getOutputs(inputs)
-            logging.info("%s -> %s (%s)" % (inputs, res, targets))
+            if not k % (1+iterations/100):
+                info("iter(%s) error = %s" % (iterations - k, error))
     def test(self, patterns):
-        def getId(targets):
-            if len(targets) > 1:
-                return targets.argmax()
-            else:
-                return targets[0] > 0.5 # only Sigmoid...
-        res = {}
-        for inputs, targets in patterns:
-            outputs = self.getOutputs(inputs)
-            idx = getId(targets)
-            res.setdefault(idx, {True: 0.0, False: 0.0, "err": None})
-            res[idx][idx == getId(outputs)] += 1.0
-            res[idx]["err"] = res[idx][False] / (res[idx][True] + res[idx][False])
-        logging.info(pprint.pformat(res))
+        info(" TEST ".center(70, "#"))
+        for i in range(patterns.shape[0]):
+            info("%s -> %s (%s)" % (patterns[i,:-self.idx], self.propagate(patterns[i,:-self.idx]), patterns[i,-self.idx:]))
     def dump(self):
-        return {"ShallowNetwork": [self.in_layer.dump(), self.out_layer.dump()]}
+        return {"ShallowNetwork": [self.in_layer, self.out_layer]}
     def __str__(self):
         return "<ShallowNetwork %s>" % str([self.in_layer, self.out_layer])
 
-
+"""
 class DeepNetwork:
     def __init__(self, n_nodes, auto_mode="step"):
         n_nodes[0] += 1 # bias
@@ -165,17 +200,17 @@ class DeepNetwork:
         return self.layers[-1].getOutputs()
     def prepare(self, patterns, iterations, learn):
         auto_patterns = [(vector(list(inputs) + [1.0]), vector(list(inputs) + [1.0])) for inputs, targets in patterns]
-        logging.info("prepare")
+        info("prepare")
         earlystop = int(0.7 * iterations / len(self.layers))
         for c, layer in enumerate(self.layers):
             if self.auto_mode == "step":
-                auto_net = ShallowNetwork(len(layer.getInputs()), len(layer.getOutputs()), len(layer.getInputs()), bias=False)
-                logging.debug("auto_net(step): %s" % auto_net)
+                auto_net = Shallownp.twork(len(layer.getInputs()), len(layer.getOutputs()), len(layer.getInputs()), bias=False)
+                #debug("auto_net(step): %s" % auto_net)
                 auto_net.in_layer.copyWeights(layer)
                 auto_net.train(auto_patterns, iterations - (c * earlystop), 2 * learn * (len(self.layers) - c))
             else:
-                auto_net = ShallowNetwork(len(layer.getInputs()), len(layer.getOutputs()), len(self.layers[0].getInputs()), bias=False)
-                logging.debug("auto_net(input): %s" % auto_net)
+                auto_net = Shallownp.twork(len(layer.getInputs()), len(layer.getOutputs()), len(self.layers[0].getInputs()), bias=False)
+                #debug("auto_net(input): %s" % auto_net)
                 auto_net.in_layer.copyWeights(layer)
                 auto_net.train(auto_patterns, iterations, learn)
             layer.copyWeights(auto_net.in_layer)
@@ -202,7 +237,7 @@ class DeepNetwork:
         error = last_error = 0.0
         min_error = [float("inf"), [], 0] # err, weights, count
         #self.prepare(patterns, iterations, learn)
-        logging.info("train")
+        info("train")
         count = iterations
         step = 10 + int(math.log(iterations))
         err = learn/(iterations/10)
@@ -217,7 +252,7 @@ class DeepNetwork:
                 error += self.backPropagate(targets)
                 self.updateWeights(learn)
             if not count % step:
-                logging.debug("iter(%s) error = %f" % (count, error))
+                #debug("iter(%s) error = %f" % (count, error))
             if error < min_error[0]:
                 min_error = [error, [l.getWeights() for l in self.layers], 0]
             else:
@@ -249,42 +284,38 @@ class DeepNetwork:
             res[idx][idx == getId(outputs)] += 1.0
             res[idx]["acc"] = 100 * res[idx][True] / (res[idx][True] + res[idx][False])
             if printed < 10:
-                logging.info("%s -> %s" % (outputs, targets))
+                info("%s -> %s" % (outputs, targets))
                 printed += 1
-        logging.info(pprint.pformat(res))
+        info(pprint.pformat(res))
     def dump(self):
         return {"DeepNetwork": [l.dump() for l in self.layers]}
     def __str__(self):
         return "<DeepNetwork %s>" % str(self.layers)
 
-
-def demo():
+"""
+def demo(iterations=1000, learn=0.05):
     # Teach network XOR function
-    patterns = [
-        [vector([0.0,0.0]), vector([0.0])],
-        [vector([0.0,1.0]), vector([1.0])],
-        [vector([1.0,0.0]), vector([1.0])],
-        [vector([1.0,1.0]), vector([0.0])]
-    ]
-    _patterns = [
-        [[-1.0,-1.0], [-1.0]],
-        [[-1.0, 1.0], [ 1.0]],
-        [[ 1.0,-1.0], [ 1.0]],
-        [[ 1.0, 1.0], [-1.0]]
-    ]
+    patterns = np.mat([[0.0,0.0, 0.0],
+                       [0.0,1.0, 1.0],
+                       [1.0,0.0, 1.0],
+                       [1.0,1.0, 0.0]])
+
+    _patterns = np.mat([[0.0,0.0, 0.0,0.0],
+                       [0.0,1.0, 0.0,1.0],
+                       [1.0,0.0, 1.0,0.0],
+                       [1.0,1.0, 1.0,1.0]])
 
     # create a network
-    #net = ShallowNetwork(2, 5, 1)
-    net = DeepNetwork([2, 3, 3, 1], ["step", "input"][0])
+    net = ShallowNetwork(2, 5, 1)
+    #net = DeepNetwork([2, 3, 3, 1], ["step", "input"][0])
     # train it with some patterns
-    for i in range(1):
-        net.prepare(patterns, 50000, 0.05)
+    #for i in range(1):
+    #    net.prepare(patterns, 50000, 0.05)
     # test it
     #print net.dump()
-    net.test(patterns)
+    #net.test(patterns)
     print net
-    time.sleep(5)
-    net.train(patterns, 50000)
+    net.train(patterns, iterations, learn)
     net.test(patterns)
 
 
