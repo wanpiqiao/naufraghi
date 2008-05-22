@@ -86,7 +86,7 @@ def run(maxepoch, numhid, batchdata, linear=False):
             posvisact = N.sum(data)
 
             ######### END OF POSITIVE PHASE  #################################################
-            poshidstates = poshidprobs > N.random.rand(numcases, numhid) # in place of a data shuffle
+            poshidstates = poshidprobs > N.random.rand(numcases, numhid) # in place of a data shuffle?
 
             ######### START NEGATIVE PHASE  ##################################################
             negdata = 1.0 / (1.0 + N.exp(-poshidstates*weights.T - N.tile(bias_vis, (numcases, 1))))

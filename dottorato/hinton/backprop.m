@@ -62,8 +62,7 @@ err=0;
 [numcases numdims numbatches]=size(batchdata);
 N=numcases;
  for batch = 1:numbatches
-  data = [batchdata(:,:,batch)];
-  data = [data ones(N,1)];
+  data = [batchdata(:,:,batch)]; data = [data  ones(N,1)];
   w1probs = 1./(1 + exp(-data*w1)); w1probs = [w1probs  ones(N,1)];
   w2probs = 1./(1 + exp(-w1probs*w2)); w2probs = [w2probs ones(N,1)];
   w3probs = 1./(1 + exp(-w2probs*w3)); w3probs = [w3probs  ones(N,1)];
@@ -72,7 +71,7 @@ N=numcases;
   w6probs = 1./(1 + exp(-w5probs*w6)); w6probs = [w6probs  ones(N,1)];
   w7probs = 1./(1 + exp(-w6probs*w7)); w7probs = [w7probs  ones(N,1)];
   dataout = 1./(1 + exp(-w7probs*w8));
-  err= err +  1/N*sum(sum( (data(:,1:end-1)-dataout).^2 )); 
+  err= err + 1/N*sum(sum( (data(:,1:end-1)-dataout).^2 )); 
   end
  train_err(epoch)=err/numbatches;
 
