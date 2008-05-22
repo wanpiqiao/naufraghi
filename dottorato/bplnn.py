@@ -88,7 +88,7 @@ def sigmoid_deriv(v):
     return np.multiply(v, (1.0 - v))
 def softmax(v):
     vv = np.exp(v - np.max(v, axis=1))
-    return vv / sum(vv, axis=1)
+    return vv / np.sum(vv, axis=1)
 
 class Layer:
     def __init__(self, n_in, n_out, linear=False):
