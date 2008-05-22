@@ -55,10 +55,10 @@ def print_exc_plus():
                 print "<ERROR WHILE PRINTING VALUE>"
 
 
-def stats(patterns):
-    return "\n".join(["patterns = %s" % len(patterns),
-                      "features = %s" % len(patterns[0][0]),
-                      "targets  = %s" % len(patterns[0][1])])
+def stats(inputs, targets):
+    return "\n".join(["patterns = %s" % len(inputs),
+                      "features = %s" % len(inputs[0]),
+                      "targets  = %s" % len(targets[0])])
 
 
 def trace(s, sep='-'):
@@ -134,28 +134,42 @@ class Layer:
         
 class AbstractNetwork:
     def train(self, inputs, targets, iterations=1000, learn=0.05):
-        info(" TRAIN ".center(70, "#"))
         count = iterations
         step = 10 + int(math.sqrt(iterations))
         num = inputs.shape[0]
-        batch_size = 1 + round(num / 20) # numbatches... tune it for you system/dataset
+        batch_size = 1 + num / 20 # numbatches... tune it for you system/dataset
+        info((" TRAIN batch_size=%s " % batch_size).center(70, "#"))
         ind = np.arange(num)
         while count:
             count -= 1
-            errors = 0.0
+            error = 0.0
             np.random.shuffle(ind)
             for batch in range(0, num, batch_size):
                 selection = ind[batch:batch + batch_size]
                 self.propagate(inputs[selection])
                 self.backPropagate(targets[selection])
-                errors += self.errors
+                error += self.errors.sum()
                 self.updateWeights(learn)
             if not count % step:
-                info("iter(%s) errors = %s" % (count, errors))
+                info("iter(%s) errors = %s" % (count, error))
     def test(self, inputs, targets):
         info(" TEST ".center(70, "#"))
+        def cls(arg):
+            if arg.shape[1] == 1:
+                return arg > 0.5
+            else:
+                return arg.argmax()
+        #for i in range(inputs.shape[0])[:10]:
+        #    info("%s -> %s (%s)" % (inputs[i], cls(self.propagate(inputs[i])), cls(targets[i])))
+        res = {}
         for i in range(inputs.shape[0]):
-            info("%s -> %s (%s)" % (inputs[i], self.propagate(inputs[i]), targets[i]))
+            output = cls(self.propagate(inputs[i]))
+            target = cls(targets[i])
+            res.setdefault(target, {True: 0.0, False: 0.0})
+            res[target][target == output] += 1.0
+            res[target]["acc"] = 100 * res[target][True] / (res[target][True] + res[target][False])
+        info(pprint.pformat(res))
+        info("mean acc = %f" % np.mean([res[t]["acc"] for t in res]))
 
 class ShallowNetwork(AbstractNetwork):
     def __init__(self, n_in, n_hid, n_out, bias=True):
@@ -204,6 +218,7 @@ class DeepNetwork(AbstractNetwork):
         if bias:
             n_nodes[0] += 1 # bias
         self.layers = [Layer(n_in, n_out) for n_in, n_out in zip(n_nodes[:-1], n_nodes[1:])]
+        self.layers += [Layer(n_nodes[-1], n_nodes[-1])] # descramble autoencoder
     def propagate(self, inputs):
         if self.bias:
             inputs = np.append(inputs, np.ones((inputs.shape[0],1)), axis=1)
@@ -225,12 +240,13 @@ class DeepNetwork(AbstractNetwork):
         if self.bias:
             inputs = np.append(inputs, np.ones((inputs.shape[0],1)), axis=1)
         iters = map(int, np.linspace(iterations, iterations/2, len(self.layers)))
-        for c, layer in enumerate(self.layers):
-            info(("layer(%d) = %s" % (c, layer)).center(70, "#"))
+        for c, layer in enumerate(self.layers[:-1]):
+            info((" (%d) %s " % (c, layer)).center(70, "#"))
             auto_net = ShallowNetwork(layer.n_in, layer.n_out, layer.n_in, bias=False)
             auto_net.out_layer.weights = layer.weights.T
             auto_net.train(inputs, inputs, iters[c])
             layer.weights = auto_net.out_layer.weights.T
+            auto_net.propagate(inputs)
             inputs = auto_net.in_layer.outputs
     def dump(self):
         return {"DeepNetwork": [l.dump() for l in self.layers]}
