@@ -89,7 +89,7 @@ class Layer:
         self.linear = linear
         self.inputs = None
         self.delta_inputs = None
-        self.weights = np.mat(np.random.randn(n_in, n_out)*0.1)
+        self.weights = np.mat(np.random.randn(n_in, n_out)*1.0)
         self.outputs = None
         self.delta_outputs = None
         self.targets = None
@@ -100,6 +100,12 @@ class Layer:
         self.outputs = sigmoid(self.inputs*self.weights)
         #debug("outputs = %s" % self.outputs)
         return self.outputs
+    def propagateBack(self, outputs):
+        self.outputs = outputs
+        #debug("outputs = %s\nweights.T = %s" % (self.outputs, self.weights.T))
+        self.inputs = sigmoid(self.outputs*self.weights.T)
+        #debug("inputs = %s" % self.inputs)
+        return self.inputs
     def backPropagate(self, targets=None, delta_outputs=None):
         if targets != None:
             self.targets = targets
@@ -124,11 +130,35 @@ class Layer:
         return self.weights
     def __repr__(self):
         return "<Layer %d %d>" % (self.n_in, self.n_out)
+        
+        
+class AbstractNetwork:
+    def train(self, inputs, targets, iterations=1000, learn=0.05):
+        info(" TRAIN ".center(70, "#"))
+        count = iterations
+        step = 10 + int(math.sqrt(iterations))
+        num = inputs.shape[0]
+        batch_size = 1 + round(num / 20) # numbatches... tune it for you system/dataset
+        ind = np.arange(num)
+        while count:
+            count -= 1
+            errors = 0.0
+            np.random.shuffle(ind)
+            for batch in range(0, num, batch_size):
+                selection = ind[batch:batch + batch_size]
+                self.propagate(inputs[selection])
+                self.backPropagate(targets[selection])
+                errors += self.errors
+                self.updateWeights(learn)
+            if not count % step:
+                info("iter(%s) errors = %s" % (count, errors))
+    def test(self, inputs, targets):
+        info(" TEST ".center(70, "#"))
+        for i in range(inputs.shape[0]):
+            info("%s -> %s (%s)" % (inputs[i], self.propagate(inputs[i]), targets[i]))
 
-
-class ShallowNetwork:
+class ShallowNetwork(AbstractNetwork):
     def __init__(self, n_in, n_hid, n_out, bias=True):
-        self.idx = 1
         self.bias = bias
         if bias:
             n_in = n_in + 1
@@ -143,156 +173,71 @@ class ShallowNetwork:
         #debug(" propagate OUT ".center(70, "-"))
         outputs = self.out_layer.propagate(hiddens)
         return outputs
+    def propagateBack(self, outputs):
+        #debug(" propagateBack IN ".center(70, "-"))
+        hiddens = self.out_layer.propagateBack(outputs + 0.1 * np.random.rand(*outputs.shape))
+        #debug(" propagateBack OUT ".center(70, "-"))
+        inputs = self.in_layer.propagateBack(hiddens)
+        if self.bias:
+            inputs = inputs[:,:-1]
+        return inputs
     def backPropagate(self, targets):
         #debug(" backPropagate OUT ".center(70, "-"))
         delta_inputs = self.out_layer.backPropagate(targets=targets)
+        self.errors = self.out_layer.errors
         #debug(" backPropagate IN ".center(70, "-"))
-        self.in_layer.backPropagate(delta_outputs=delta_inputs)
-        return self.out_layer.errors
+        return self.in_layer.backPropagate(delta_outputs=delta_inputs)
     def updateWeights(self, learn):
         #debug(" updateWeights IN ".center(70, "-"))
         self.in_layer.updateWeights(learn)
         #debug(" updateWeights OUT ".center(70, "-"))
         self.out_layer.updateWeights(learn)
-    def train(self, patterns, iterations=1000, learn=0.05):
-        info(" TRAIN ".center(70, "#"))
-        for k in range(iterations):
-            random.shuffle(patterns)
-            error = 0.0
-            for i in range(patterns.shape[0]):
-                self.propagate(patterns[:,:-self.idx])
-                error += self.backPropagate(patterns[:,-self.idx:])
-                self.updateWeights(learn)
-            if not k % (1+iterations/100):
-                info("iter(%s) error = %s" % (iterations - k, error))
-    def test(self, patterns):
-        info(" TEST ".center(70, "#"))
-        for i in range(patterns.shape[0]):
-            info("%s -> %s (%s)" % (patterns[i,:-self.idx], self.propagate(patterns[i,:-self.idx]), patterns[i,-self.idx:]))
     def dump(self):
         return {"ShallowNetwork": [self.in_layer, self.out_layer]}
     def __str__(self):
         return "<ShallowNetwork %s>" % str([self.in_layer, self.out_layer])
 
-"""
-class DeepNetwork:
-    def __init__(self, n_nodes, auto_mode="step"):
-        n_nodes[0] += 1 # bias
+
+class DeepNetwork(AbstractNetwork):
+    def __init__(self, n_nodes, bias=True):
+        self.bias = bias
+        if bias:
+            n_nodes[0] += 1 # bias
         self.layers = [Layer(n_in, n_out) for n_in, n_out in zip(n_nodes[:-1], n_nodes[1:])]
-        self.auto_mode = auto_mode
-    def _connect(self):
-        for i in range(len(self.layers)-1):
-            self.layers[i].connect(self.layers[i+1])
     def propagate(self, inputs):
-        self.layers[0].propagate(inputs)
+        if self.bias:
+            inputs = np.append(inputs, np.ones((inputs.shape[0],1)), axis=1)
+        outputs = self.layers[0].propagate(inputs)
         for layer in self.layers[1:]:
-            layer.propagate()
+            outputs = layer.propagate(outputs)
+        return outputs
     def backPropagate(self, targets):
-        err = self.layers[-1].backPropagate(targets)
+        delta_inputs = self.layers[-1].backPropagate(targets=targets)
+        self.errors = self.layers[-1].errors
         for layer in reversed(self.layers[:-1]):
-            layer.backPropagate()
-        return err
+            delta_inputs = layer.backPropagate(delta_outputs=delta_inputs)
+        return delta_inputs
     def updateWeights(self, learn):
         for layer in self.layers:
             layer.updateWeights(learn)
-    def getOutputs(self, inputs):
-        self.propagate(inputs)
-        return self.layers[-1].getOutputs()
-    def prepare(self, patterns, iterations, learn):
-        auto_patterns = [(vector(list(inputs) + [1.0]), vector(list(inputs) + [1.0])) for inputs, targets in patterns]
-        info("prepare")
-        earlystop = int(0.7 * iterations / len(self.layers))
+    def prepare(self, inputs, targets, iterations, learn):
+        info(" PREPARE ".center(70, "o"))
+        if self.bias:
+            inputs = np.append(inputs, np.ones((inputs.shape[0],1)), axis=1)
+        iters = map(int, np.linspace(iterations, iterations/2, len(self.layers)))
         for c, layer in enumerate(self.layers):
-            if self.auto_mode == "step":
-                auto_net = Shallownp.twork(len(layer.getInputs()), len(layer.getOutputs()), len(layer.getInputs()), bias=False)
-                #debug("auto_net(step): %s" % auto_net)
-                auto_net.in_layer.copyWeights(layer)
-                auto_net.train(auto_patterns, iterations - (c * earlystop), 2 * learn * (len(self.layers) - c))
-            else:
-                auto_net = Shallownp.twork(len(layer.getInputs()), len(layer.getOutputs()), len(self.layers[0].getInputs()), bias=False)
-                #debug("auto_net(input): %s" % auto_net)
-                auto_net.in_layer.copyWeights(layer)
-                auto_net.train(auto_patterns, iterations, learn)
-            layer.copyWeights(auto_net.in_layer)
-            if layer != self.layers[-1]:
-                new_auto_patterns = []
-                for inputs, targets in auto_patterns:
-                    auto_net.propagate(inputs)
-                    new_inputs = auto_net.out_layer.getInputs()
-                    if self.auto_mode == "step":
-                        new_auto_patterns.append((new_inputs, new_inputs))
-                    else:
-                        new_auto_patterns.append((new_inputs, targets))
-                auto_patterns = new_auto_patterns
-            else:
-                auto_outputs = []
-                for c, (inputs, targets) in enumerate(auto_patterns):
-                    auto_net.propagate(inputs)
-                    outputs = auto_net.out_layer.getInputs()
-                    auto_outputs.append((outputs, patterns[c][1]))
-                import pprint
-                open("auto_outputs.log", "w+").write(pprint.pformat(auto_outputs)+"\n")
-        self._connect()
-    def train(self, patterns, iterations=1000, learn=0.05):
-        error = last_error = 0.0
-        min_error = [float("inf"), [], 0] # err, weights, count
-        #self.prepare(patterns, iterations, learn)
-        info("train")
-        count = iterations
-        step = 10 + int(math.log(iterations))
-        err = learn/(iterations/10)
-        train_patterns = [(vector(list(inputs) + [1.0]), targets) for inputs, targets in patterns]
-        while count > 0:
-            random.shuffle(train_patterns)
-            count -= 1
-            last_error = error
-            error = 0.0
-            for inputs, targets in train_patterns:
-                self.propagate(inputs)
-                error += self.backPropagate(targets)
-                self.updateWeights(learn)
-            if not count % step:
-                #debug("iter(%s) error = %f" % (count, error))
-            if error < min_error[0]:
-                min_error = [error, [l.getWeights() for l in self.layers], 0]
-            else:
-                min_error[2] += 1
-                if min_error[2] > 10 *  step:
-                    print "Revert to best so far!!"
-                    min_error[0] = float("inf")
-                    min_error[2] = 0
-                    for c, w in enumerate(min_error[1]):
-                        self.layers[c].setWeights(w)
-            if False and abs(error - last_error) < learn / (iterations * len(patterns)):
-                print "early exit, delta_error too small!!"
-                break
-            if error == nan:
-                raise ValueError(error)
-    def test(self, patterns):
-        def getId(targets):
-            if len(targets) > 1:
-                return targets.argmax()
-            else:
-                return int(targets[0] > 0.5) # only Sigmoid...
-        res = {}
-        test_patterns = [(vector(list(inputs) + [1.0]), targets) for inputs, targets in patterns]
-        printed = 0
-        for inputs, targets in test_patterns:
-            outputs = self.getOutputs(inputs)
-            idx = getId(targets)
-            res.setdefault(idx, {True: 0.0, False: 0.0})
-            res[idx][idx == getId(outputs)] += 1.0
-            res[idx]["acc"] = 100 * res[idx][True] / (res[idx][True] + res[idx][False])
-            if printed < 10:
-                info("%s -> %s" % (outputs, targets))
-                printed += 1
-        info(pprint.pformat(res))
+            info(("layer(%d) = %s" % (c, layer)).center(70, "#"))
+            auto_net = ShallowNetwork(layer.n_in, layer.n_out, layer.n_in, bias=False)
+            auto_net.out_layer.weights = layer.weights.T
+            auto_net.train(inputs, inputs, iters[c])
+            layer.weights = auto_net.out_layer.weights.T
+            inputs = auto_net.in_layer.outputs
     def dump(self):
         return {"DeepNetwork": [l.dump() for l in self.layers]}
     def __str__(self):
         return "<DeepNetwork %s>" % str(self.layers)
 
-"""
+
 def demo(iterations=1000, learn=0.05):
     # Teach network XOR function
     patterns = np.mat([[0.0,0.0, 0.0],
@@ -304,10 +249,10 @@ def demo(iterations=1000, learn=0.05):
                        [0.0,1.0, 0.0,1.0],
                        [1.0,0.0, 1.0,0.0],
                        [1.0,1.0, 1.0,1.0]])
-
+    inputs, targets = patterns[:,:-1], patterns[:,-1:]
     # create a network
-    net = ShallowNetwork(2, 5, 1)
-    #net = DeepNetwork([2, 3, 3, 1], ["step", "input"][0])
+    #net = ShallowNetwork(2, 5, 1)
+    net = DeepNetwork([2, 5, 3, 5, 1])
     # train it with some patterns
     #for i in range(1):
     #    net.prepare(patterns, 50000, 0.05)
@@ -315,8 +260,11 @@ def demo(iterations=1000, learn=0.05):
     #print net.dump()
     #net.test(patterns)
     print net
-    net.train(patterns, iterations, learn)
-    net.test(patterns)
+    if isinstance(net, DeepNetwork):
+        net.prepare(inputs, targets, iterations, learn)
+    net.train(inputs, targets, iterations, learn)
+    net.test(inputs, targets)
+    return net
 
 
 if __name__ == "__main__":
