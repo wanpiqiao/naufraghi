@@ -39,7 +39,7 @@ def run():
     net.prepare(inputs, 100, 0.05)
     net.test(test_inputs, test_targets)
     trace("FineTrain")
-    net.train(inputs, targets, 100)
+    net.train(inputs, targets, 500)
     net.test(test_inputs, test_targets)
 
 
