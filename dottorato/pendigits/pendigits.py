@@ -11,37 +11,34 @@ sys.path.append("../")
 
 from bplnn import *
 
-def load_data(filename):
+def load_patterns(filename):
     trace("Loading '%s'" % filename)
-    data = []
+    inputs = []
+    targets = []
     for line in open(filename).readlines():
         row = map(int, line.split(","))
         stroke, number = row[:-1], row[-1]
         # normalize inputs
-        inputs = [float(i)/100 for i in stroke]
+        inputs.append([float(i)/100 for i in stroke])
         # digitalize outputs
-        targets = [int(i == number) for i in range(10)]
-        data.append([vector(inputs), vector(targets)])
-    print stats(data)
+        targets.append([int(i == number) for i in range(10)])
+    print stats(inputs, targets)
     print "-"*70
-    return data
+    return np.mat(inputs), np.mat(targets)
 
 def run():
     trace("PenDigits dataset", "#")
-    patterns = load_data("pendigits.tra")
-    test_patterns = load_data("pendigits.tes")
-    n_in = len(patterns[0][0]) # 16
-    n_out = len(patterns[0][1]) # 10
-    net = DeepNetwork([n_in, 14, 12, n_out], auto_mode="step")
+    inputs, targets = load_patterns("pendigits.tra")
+    test_inputs, test_targets = load_patterns("pendigits.tes")
+    n_in = inputs.shape[1] # 16
+    n_out = targets.shape[1] # 10
+    net = DeepNetwork([n_in, 20, 15, n_out])
     print net
-    for i in range(1): # multiple rounds are not so good...
-        print "prepare round", i
-        net.prepare(patterns, 100, 0.05)
-        net.test(test_patterns)
-    #print net.dump()
-    print "!"*20, "auto test", "!"*20
-    net.train(patterns, 10000)
-    net.test(test_patterns)
+    net.prepare(inputs, targets, 100, 0.05)
+    net.test(test_inputs, test_targets)
+    info(" auto test ".center(70, "-"))
+    net.train(inputs, targets, 100)
+    net.test(test_inputs, test_targets)
 
 
 
