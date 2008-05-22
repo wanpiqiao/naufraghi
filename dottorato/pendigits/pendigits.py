@@ -2,13 +2,8 @@
 # -*- encoding: utf-8 -*-
 # Copyright (C) 2008 Matteo Bertini
 
-import os
 import sys
-
-os.chdir(os.path.abspath(os.path.dirname(__file__)))
-
 sys.path.append("../")
-
 from bplnn import *
 
 def load_patterns(filename):
@@ -41,6 +36,6 @@ def run():
     net.test(test_inputs, test_targets)
 
 
-
 if __name__=="__main__":
-    run()
+    timed(run)
+

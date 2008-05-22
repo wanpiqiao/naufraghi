@@ -2,6 +2,7 @@
 # -*- encoding: utf-8 -*-
 # Copyright (C) 2008 Matteo Bertini
 
+import os
 import sys
 import math
 import time
@@ -55,6 +56,10 @@ def print_exc_plus():
             except:
                 print "<ERROR WHILE PRINTING VALUE>"
 
+def timed(func):
+    start_time = time.time()
+    func()
+    print "Time:", (time.time() - start_time)
 
 def stats(inputs, targets):
     return "\n".join(["patterns = %s" % len(inputs),
@@ -81,7 +86,9 @@ def sigmoid(v):
     return 1.0 / (1.0 + np.exp(-v))
 def sigmoid_deriv(v):
     return np.multiply(v, (1.0 - v))
-
+def softmax(v):
+    vv = np.exp(v - np.max(v, axis=1))
+    return vv / sum(vv, axis=1)
 
 class Layer:
     def __init__(self, n_in, n_out, linear=False):
@@ -93,6 +100,7 @@ class Layer:
         self.weights = np.mat(np.random.randn(n_in, n_out)*1.0)
         #self.weights.sort(axis=1)
         #self.weights.sort(axis=0, kind='mergesort')
+        self.activations = None
         self.outputs = None
         self.delta_outputs = None
         self.targets = None
@@ -100,7 +108,8 @@ class Layer:
     def propagate(self, inputs):
         self.inputs = inputs
         #debug("inputs = %s\nweights = %s" % (self.inputs, self.weights))
-        self.outputs = sigmoid(self.inputs*self.weights)
+        self.activations = self.inputs*self.weights
+        self.outputs = sigmoid(self.activations)
         #debug("outputs = %s" % self.outputs)
         return self.outputs
     def propagateBack(self, outputs):
@@ -113,7 +122,7 @@ class Layer:
         if targets != None:
             self.targets = targets
             #debug("targets = %s\noutputs = %s" % (self.targets, self.outputs))
-            self.delta_outputs = np.multiply(sigmoid_deriv(self.outputs), (self.targets - self.outputs))
+            self.delta_outputs =  np.multiply(softmax(self.activations), (self.targets - self.outputs))
             #debug("delta_outputs = %s" % self.delta_outputs)
             self.errors = np.sum(np.mat(np.array(self.targets - self.outputs)**2), axis=1)
             #debug("errors = %s" % self.errors)
@@ -303,9 +312,7 @@ if __name__ == "__main__":
         import doctest
         doctest.testmod()
     try:
-        start_time = time.time()
-        demo()
-        print "Time:", (time.time() - start_time)
+        timed(demo)
     except:
         print_exc_plus()
 

@@ -2,14 +2,8 @@
 # -*- encoding: utf-8 -*-
 # Copyright (C) 2008 Matteo Bertini
 
-import os
 import sys
-import gzip
-
-os.chdir(os.path.abspath(os.path.dirname(__file__)))
-
 sys.path.append("../")
-
 from bplnn import *
 
 def load_patterns(filename):
@@ -36,12 +30,12 @@ def run():
     net = DeepNetwork([n_in, 500, 250, 100, n_out])
     print net
     trace("AutoTrain")
-    net.prepare(inputs, 100, 0.05)
+    net.prepare(inputs, 10, 0.05)
     net.test(test_inputs, test_targets)
     trace("FineTrain")
-    net.train(inputs, targets, 500)
+    net.train(inputs, targets, 10)
     net.test(test_inputs, test_targets)
 
 
 if __name__=="__main__":
-    run()
+    timed(run)
