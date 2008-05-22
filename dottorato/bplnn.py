@@ -91,6 +91,8 @@ class Layer:
         self.inputs = None
         self.delta_inputs = None
         self.weights = np.mat(np.random.randn(n_in, n_out)*1.0)
+        self.weights.sort(axis=1)
+        self.weights.sort(axis=0, kind='mergesort')
         self.outputs = None
         self.delta_outputs = None
         self.targets = None
@@ -143,7 +145,7 @@ class AbstractNetwork:
         ind = np.arange(num)
         for c, layer in enumerate(self.layers):
             pylab.imshow(layer.weights, cmap=pylab.cm.gray)
-            pylab.savefig("(%1d) %s before" % (c, self))
+            pylab.savefig("%s (%1d) before" % (self, c))
         while count:
             count -= 1
             error = 0.0
@@ -155,10 +157,10 @@ class AbstractNetwork:
                 error += self.errors.sum()
                 self.updateWeights(learn)
             if not count % step:
-                info("iter(%s) errors = %s" % (count, error))
+                info("iter(%s) error = %s" % (count, error))
         for c, layer in enumerate(self.layers):
             pylab.imshow(layer.weights, cmap=pylab.cm.gray)
-            pylab.savefig("(%1d) %s post" % (c, self))
+            pylab.savefig("%s (%1d) post" % (self, c))
     def test(self, inputs, targets):
         info(" TEST ".center(70, "#"))
         def cls(arg):
@@ -181,6 +183,7 @@ class AbstractNetwork:
 class ShallowNetwork(AbstractNetwork):
     def __init__(self, n_in, n_hid, n_out, bias=True):
         self.bias = bias
+        self.n_nodes = [n_in, n_hid, n_out]
         if bias:
             n_in = n_in + 1
         random.seed(123)
@@ -215,12 +218,13 @@ class ShallowNetwork(AbstractNetwork):
     def dump(self):
         return {"ShallowNetwork": self.layers}
     def __str__(self):
-        return "<ShallowNetwork %s>" % self.layers
+        return "<ShallowNetwork %s>" % self.n_nodes
 
 
 class DeepNetwork(AbstractNetwork):
     def __init__(self, n_nodes, bias=True):
         self.bias = bias
+        self.n_nodes = n_nodes
         if bias:
             n_nodes[0] += 1 # bias
         self.layers = [Layer(n_in, n_out) for n_in, n_out in zip(n_nodes[:-1], n_nodes[1:])]
@@ -240,6 +244,8 @@ class DeepNetwork(AbstractNetwork):
         return delta_inputs
     def updateWeights(self, learn):
         for layer in self.layers:
+            if layer != self.layers[-1]:
+                learn = learn / len(self.layers)
             layer.updateWeights(learn)
     def prepare(self, inputs, targets, iterations, learn):
         info(" PREPARE ".center(70, "o"))
@@ -257,7 +263,7 @@ class DeepNetwork(AbstractNetwork):
     def dump(self):
         return {"DeepNetwork": [l.dump() for l in self.layers]}
     def __str__(self):
-        return "<DeepNetwork %s>" % str(self.layers)
+        return "<DeepNetwork %s>" % self.n_nodes
 
 
 def demo(iterations=1000, learn=0.05):
