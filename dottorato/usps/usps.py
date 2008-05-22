@@ -3,6 +3,7 @@
 # Copyright (C) 2008 Matteo Bertini
 
 import sys
+import gzip
 sys.path.append("../")
 from bplnn import *
 
