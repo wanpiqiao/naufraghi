@@ -10,6 +10,7 @@ import pprint
 import numpy as np
 from numpy import matlib
 from numpy import random
+import pylab
 
 VERBOSE = 1
 
@@ -140,6 +141,9 @@ class AbstractNetwork:
         batch_size = 1 + num / 20 # numbatches... tune it for you system/dataset
         info((" TRAIN batch_size=%s " % batch_size).center(70, "#"))
         ind = np.arange(num)
+        for c, layer in enumerate(self.layers):
+            pylab.imshow(layer.weights, cmap=pylab.cm.gray)
+            pylab.savefig("(%1d) %s before" % (c, self))
         while count:
             count -= 1
             error = 0.0
@@ -152,11 +156,14 @@ class AbstractNetwork:
                 self.updateWeights(learn)
             if not count % step:
                 info("iter(%s) errors = %s" % (count, error))
+        for c, layer in enumerate(self.layers):
+            pylab.imshow(layer.weights, cmap=pylab.cm.gray)
+            pylab.savefig("(%1d) %s post" % (c, self))
     def test(self, inputs, targets):
         info(" TEST ".center(70, "#"))
         def cls(arg):
             if arg.shape[1] == 1:
-                return arg > 0.5
+                return int(arg > 0.5)
             else:
                 return arg.argmax()
         #for i in range(inputs.shape[0])[:10]:
@@ -177,39 +184,38 @@ class ShallowNetwork(AbstractNetwork):
         if bias:
             n_in = n_in + 1
         random.seed(123)
-        self.in_layer = Layer(n_in, n_hid)
-        self.out_layer = Layer(n_hid, n_out)
+        self.layers = [Layer(n_in, n_hid), Layer(n_hid, n_out)]
     def propagate(self, inputs):
         if self.bias:
             inputs = np.append(inputs, np.ones((inputs.shape[0],1)), axis=1)
         #debug(" propagate IN ".center(70, "-"))
-        hiddens = self.in_layer.propagate(inputs)
+        hiddens = self.layers[0].propagate(inputs)
         #debug(" propagate OUT ".center(70, "-"))
-        outputs = self.out_layer.propagate(hiddens)
+        outputs = self.layers[1].propagate(hiddens)
         return outputs
     def propagateBack(self, outputs):
         #debug(" propagateBack IN ".center(70, "-"))
-        hiddens = self.out_layer.propagateBack(outputs + 0.1 * np.random.rand(*outputs.shape))
+        hiddens = self.layers[1].propagateBack(outputs + 0.1 * np.random.rand(*outputs.shape))
         #debug(" propagateBack OUT ".center(70, "-"))
-        inputs = self.in_layer.propagateBack(hiddens)
+        inputs = self.layers[0].propagateBack(hiddens)
         if self.bias:
             inputs = inputs[:,:-1]
         return inputs
     def backPropagate(self, targets):
         #debug(" backPropagate OUT ".center(70, "-"))
-        delta_inputs = self.out_layer.backPropagate(targets=targets)
-        self.errors = self.out_layer.errors
+        delta_inputs = self.layers[1].backPropagate(targets=targets)
+        self.errors = self.layers[1].errors
         #debug(" backPropagate IN ".center(70, "-"))
-        return self.in_layer.backPropagate(delta_outputs=delta_inputs)
+        return self.layers[0].backPropagate(delta_outputs=delta_inputs)
     def updateWeights(self, learn):
         #debug(" updateWeights IN ".center(70, "-"))
-        self.in_layer.updateWeights(learn)
+        self.layers[0].updateWeights(learn)
         #debug(" updateWeights OUT ".center(70, "-"))
-        self.out_layer.updateWeights(learn)
+        self.layers[1].updateWeights(learn)
     def dump(self):
-        return {"ShallowNetwork": [self.in_layer, self.out_layer]}
+        return {"ShallowNetwork": self.layers}
     def __str__(self):
-        return "<ShallowNetwork %s>" % str([self.in_layer, self.out_layer])
+        return "<ShallowNetwork %s>" % self.layers
 
 
 class DeepNetwork(AbstractNetwork):
@@ -243,11 +249,11 @@ class DeepNetwork(AbstractNetwork):
         for c, layer in enumerate(self.layers[:-1]):
             info((" (%d) %s " % (c, layer)).center(70, "#"))
             auto_net = ShallowNetwork(layer.n_in, layer.n_out, layer.n_in, bias=False)
-            auto_net.out_layer.weights = layer.weights.T
+            auto_net.layers[1].weights = layer.weights.T
             auto_net.train(inputs, inputs, iters[c])
-            layer.weights = auto_net.out_layer.weights.T
+            layer.weights = auto_net.layers[1].weights.T
             auto_net.propagate(inputs)
-            inputs = auto_net.in_layer.outputs
+            inputs = auto_net.layers[0].outputs
     def dump(self):
         return {"DeepNetwork": [l.dump() for l in self.layers]}
     def __str__(self):
@@ -268,7 +274,7 @@ def demo(iterations=1000, learn=0.05):
     inputs, targets = patterns[:,:-1], patterns[:,-1:]
     # create a network
     #net = ShallowNetwork(2, 5, 1)
-    net = DeepNetwork([2, 5, 3, 5, 1])
+    net = DeepNetwork([2, 5, 1])
     # train it with some patterns
     #for i in range(1):
     #    net.prepare(patterns, 50000, 0.05)
