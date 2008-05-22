@@ -7,13 +7,16 @@ import cbplnn as nn
 def sigmoid():
     """
     >>> sig = nn.Sigmoid()
-    >>> sig.func(0.5)
+    >>> sig.func(nn.vector([0.5]), 0)
     0.62245933120185459
-    >>> sig.deriv(0.5)
+    >>> sig.deriv(nn.vector([0.5]), 0)
     0.25
-    >>> ce = nn.CrossEntropy()
-    >>> ce.deriv(2.0, 2.5)
-    -1.0
+    >>> ce = nn.CrossEntropy(squash=nn.Sigmoid)
+    >>> ce.deriv(nn.vector([1.0, 0.5, 0.7]), nn.vector([0.8, 0.1, 0.1]), 2)
+    -0.126
+    >>> sm = nn.Softmax()
+    >>> sm.func(nn.vector([1.0, 0.5, 0.7]), 0)
+    0.42601251494920572
     """
 
 def Layer():
