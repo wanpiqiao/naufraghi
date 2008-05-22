@@ -91,8 +91,8 @@ class Layer:
         self.inputs = None
         self.delta_inputs = None
         self.weights = np.mat(np.random.randn(n_in, n_out)*1.0)
-        self.weights.sort(axis=1)
-        self.weights.sort(axis=0, kind='mergesort')
+        #self.weights.sort(axis=1)
+        #self.weights.sort(axis=0, kind='mergesort')
         self.outputs = None
         self.delta_outputs = None
         self.targets = None
