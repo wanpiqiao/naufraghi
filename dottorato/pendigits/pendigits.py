@@ -34,7 +34,7 @@ def run():
     n_out = targets.shape[1] # 10
     net = DeepNetwork([n_in, 20, 15, n_out])
     print net
-    net.prepare(inputs, targets, 200, 0.05)
+    net.prepare(inputs, 200, 0.05)
     net.test(test_inputs, test_targets)
     info(" auto test ".center(70, "-"))
     net.train(inputs, targets, 400)

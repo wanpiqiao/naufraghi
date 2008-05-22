@@ -146,8 +146,8 @@ class AbstractNetwork:
         weights_before = []
         for c, layer in enumerate(self.layers):
             weights_before.append(layer.weights.copy())
-            #pylab.imshow(layer.weights, cmap=pylab.cm.gray)
-            #pylab.savefig("%s (%1d) before" % (self, c))
+            pylab.imshow(layer.weights, cmap=pylab.cm.gray)
+            pylab.savefig("%s (%1d) before" % (self, c))
         while count:
             count -= 1
             error = 0.0
@@ -161,8 +161,8 @@ class AbstractNetwork:
             if not count % step:
                 info("iter(%s) error = %s" % (count, error))
         for c, layer in enumerate(self.layers):
-            pylab.imshow(layer.weights - weights_before[c], cmap=pylab.cm.gray)
-            pylab.savefig("%s (%1d) diff" % (self, c))
+            pylab.imshow(layer.weights, cmap=pylab.cm.gray)
+            pylab.savefig("%s (%1d) post" % (self, c))
     def test(self, inputs, targets):
         info(" TEST ".center(70, "#"))
         def cls(arg):
@@ -181,6 +181,7 @@ class AbstractNetwork:
             res[target]["acc"] = 100 * res[target][True] / (res[target][True] + res[target][False])
         info(pprint.pformat(res))
         info("mean acc = %f" % np.mean([res[t]["acc"] for t in res]))
+
 
 class ShallowNetwork(AbstractNetwork):
     def __init__(self, n_in, n_hid, n_out, bias=True):
@@ -249,7 +250,7 @@ class DeepNetwork(AbstractNetwork):
             if layer != self.layers[-1]:
                 learn = learn / len(self.layers)
             layer.updateWeights(learn)
-    def prepare(self, inputs, targets, iterations, learn):
+    def prepare(self, inputs, iterations, learn):
         info(" PREPARE ".center(70, "o"))
         if self.bias:
             inputs = np.append(inputs, np.ones((inputs.shape[0],1)), axis=1)
@@ -291,7 +292,7 @@ def demo(iterations=1000, learn=0.05):
     #net.test(patterns)
     print net
     if isinstance(net, DeepNetwork):
-        net.prepare(inputs, targets, iterations, learn)
+        net.prepare(inputs, iterations, learn)
     net.train(inputs, targets, iterations, learn)
     net.test(inputs, targets)
     return net
