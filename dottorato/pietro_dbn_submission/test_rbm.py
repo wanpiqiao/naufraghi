@@ -103,9 +103,9 @@ def test_rbm_sample_v():
         v.append(sample)
 
     # check inferred probabilities
-    expected_probs = scipy.array([[0., 0., 0., 0.],
-                                  [1.0, 0., 1.0, 0.],
-                                  [0., 1.0, 0., 1.0],
+    expected_probs = scipy.array([[0.0, 0.0, 0.0, 0.0],
+                                  [1.0, 0.0, 1.0, 0.0],
+                                  [0.0, 1.0, 0.0, 1.0],
                                   [1.0, 1.0, 1.0, 1.0]])
     assert_array_almost_equal(prob, expected_probs, 8)
 
