@@ -143,9 +143,11 @@ class AbstractNetwork:
         batch_size = 1 + num / 20 # numbatches... tune it for you system/dataset
         info((" TRAIN batch_size=%s " % batch_size).center(70, "#"))
         ind = np.arange(num)
+        weights_before = []
         for c, layer in enumerate(self.layers):
-            pylab.imshow(layer.weights, cmap=pylab.cm.gray)
-            pylab.savefig("%s (%1d) before" % (self, c))
+            weights_before.append(layer.weights.copy())
+            #pylab.imshow(layer.weights, cmap=pylab.cm.gray)
+            #pylab.savefig("%s (%1d) before" % (self, c))
         while count:
             count -= 1
             error = 0.0
@@ -159,8 +161,8 @@ class AbstractNetwork:
             if not count % step:
                 info("iter(%s) error = %s" % (count, error))
         for c, layer in enumerate(self.layers):
-            pylab.imshow(layer.weights, cmap=pylab.cm.gray)
-            pylab.savefig("%s (%1d) post" % (self, c))
+            pylab.imshow(layer.weights - weights_before[c], cmap=pylab.cm.gray)
+            pylab.savefig("%s (%1d) diff" % (self, c))
     def test(self, inputs, targets):
         info(" TEST ".center(70, "#"))
         def cls(arg):

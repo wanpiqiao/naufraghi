@@ -37,7 +37,7 @@ def run():
     net.prepare(inputs, targets, 200, 0.05)
     net.test(test_inputs, test_targets)
     info(" auto test ".center(70, "-"))
-    net.train(inputs, targets, 200)
+    net.train(inputs, targets, 400)
     net.test(test_inputs, test_targets)
 
 
