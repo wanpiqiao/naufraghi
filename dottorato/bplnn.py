@@ -15,6 +15,8 @@ import pylab
 
 VERBOSE = 1
 
+if VERBOSE > 1:
+    np.seterr(over="raise")
 def debug(message):
     if VERBOSE > 1:
         print "DEBUG:", message
@@ -58,7 +60,10 @@ def print_exc_plus():
 
 def timed(func):
     start_time = time.time()
-    func()
+    try:
+        func()
+    except:
+        print_exc_plus()
     print "Time:", (time.time() - start_time)
 
 def stats(inputs, targets):
@@ -90,16 +95,54 @@ def softmax(v):
     vv = np.exp(v - np.max(v, axis=1))
     return vv / np.sum(vv, axis=1)
 
+
+class SigmoidSumOfSquares:
+    @staticmethod
+    def delta_outputs(layer):
+        #debug("targets = %s\noutputs = %s" % (layer.targets, layer.outputs))
+        return np.multiply(sigmoid_deriv(layer.outputs), (layer.targets - layer.outputs))
+    @staticmethod
+    def outputs(layer):
+        return sigmoid(layer.activations)
+    @staticmethod
+    def delta_inputs(layer):
+        #debug("inputs = %s\ndelta_outputs = %s\nweights.T = %s" % (layer.inputs, layer.delta_outputs, layer.weights.T))
+        return np.multiply(sigmoid_deriv(layer.inputs), (layer.delta_outputs * layer.weights.T))
+    @staticmethod
+    def errors(layer):
+        return np.sum(np.mat(np.array(layer.targets - layer.outputs)**2), axis=1)
+    @staticmethod
+    def delta_weights(layer):
+        #debug("inputs.T = %s\ndelta_outputs = %s" % (layer.inputs.T, layer.delta_outputs))
+        return (layer.inputs.T * layer.delta_outputs)
+
+class SoftmaxCrossEntropy:
+    @staticmethod
+    def delta_outputs(layer):
+        return layer.outputs - layer.targets # -(layer.targets - layer.outputs)
+    @staticmethod
+    def outputs(layer):
+        return softmax(layer.activations)
+    @staticmethod
+    def delta_inputs(layer):
+        return (layer.delta_outputs * layer.weights.T)
+    @staticmethod
+    def errors(layer):
+        return -np.sum(np.multiply(layer.targets, np.log(layer.outputs)), axis=1)
+    @staticmethod
+    def delta_weights(layer):
+        #debug("inputs.T = %s\ndelta_outputs = %s" % (layer.inputs.T, layer.delta_outputs))
+        return (layer.inputs.T * layer.delta_outputs)
+
+
 class Layer:
-    def __init__(self, n_in, n_out, linear=False):
+    def __init__(self, n_in, n_out, squash=SigmoidSumOfSquares):
         self.n_in = n_in
         self.n_out = n_out
-        self.linear = linear
+        self.squash = squash
         self.inputs = None
         self.delta_inputs = None
         self.weights = np.mat(np.random.randn(n_in, n_out)*1.0)
-        #self.weights.sort(axis=1)
-        #self.weights.sort(axis=0, kind='mergesort')
         self.activations = None
         self.outputs = None
         self.delta_outputs = None
@@ -109,39 +152,30 @@ class Layer:
         self.inputs = inputs
         #debug("inputs = %s\nweights = %s" % (self.inputs, self.weights))
         self.activations = self.inputs*self.weights
-        self.outputs = sigmoid(self.activations)
+        self.outputs = self.squash.outputs(self)
         #debug("outputs = %s" % self.outputs)
         return self.outputs
-    def propagateBack(self, outputs):
-        self.outputs = outputs
-        #debug("outputs = %s\nweights.T = %s" % (self.outputs, self.weights.T))
-        self.inputs = sigmoid(self.outputs*self.weights.T)
-        #debug("inputs = %s" % self.inputs)
-        return self.inputs
     def backPropagate(self, targets=None, delta_outputs=None):
         if targets != None:
             self.targets = targets
-            #debug("targets = %s\noutputs = %s" % (self.targets, self.outputs))
-            self.delta_outputs =  np.multiply(softmax(self.activations), (self.targets - self.outputs))
+            self.delta_outputs = self.squash.delta_outputs(self)
             #debug("delta_outputs = %s" % self.delta_outputs)
-            self.errors = np.sum(np.mat(np.array(self.targets - self.outputs)**2), axis=1)
+            self.errors = self.squash.errors(self)
             #debug("errors = %s" % self.errors)
         elif delta_outputs != None:
             self.delta_outputs = delta_outputs
             #debug("delta_outputs = %s" % self.delta_outputs)
         else:
             raise ValueError("provide 'targets' or 'delta_outputs'")
-        #debug("inputs = %s\ndelta_outputs = %s\nweights.T = %s" % (self.inputs, self.delta_outputs, self.weights.T))
-        self.delta_inputs = np.multiply(sigmoid_deriv(self.inputs), (self.delta_outputs * self.weights.T))
+        self.delta_inputs = self.squash.delta_inputs(self)
         #debug("delta_inputs = %s\nerrors = %s" % (self.delta_inputs, self.errors))
         return self.delta_inputs
     def updateWeights(self, learn):
-        #debug("inputs.T = %s\ndelta_outputs = %s" % (self.inputs.T, self.delta_outputs))
-        self.weights += learn * (self.inputs.T * self.delta_outputs)
+        self.weights += learn * self.squash.delta_weights(self)
         #debug("weights = %s" % (self.weights))
         return self.weights
     def __repr__(self):
-        return "<Layer %d %d>" % (self.n_in, self.n_out)
+        return "<Layer %d %d %s>" % (self.n_in, self.n_out, self.squash.__name__)
         
         
 class AbstractNetwork:
@@ -193,13 +227,13 @@ class AbstractNetwork:
 
 
 class ShallowNetwork(AbstractNetwork):
-    def __init__(self, n_in, n_hid, n_out, bias=True):
+    def __init__(self, n_in, n_hid, n_out, bias=True, squash=SigmoidSumOfSquares):
         self.bias = bias
         self.n_nodes = [n_in, n_hid, n_out]
         if bias:
             n_in = n_in + 1
         random.seed(123)
-        self.layers = [Layer(n_in, n_hid), Layer(n_hid, n_out)]
+        self.layers = [Layer(n_in, n_hid), Layer(n_hid, n_out, squash=squash)]
     def propagate(self, inputs):
         if self.bias:
             inputs = np.append(inputs, np.ones((inputs.shape[0],1)), axis=1)
@@ -208,14 +242,6 @@ class ShallowNetwork(AbstractNetwork):
         #debug(" propagate OUT ".center(70, "-"))
         outputs = self.layers[1].propagate(hiddens)
         return outputs
-    def propagateBack(self, outputs):
-        #debug(" propagateBack IN ".center(70, "-"))
-        hiddens = self.layers[1].propagateBack(outputs + 0.1 * np.random.rand(*outputs.shape))
-        #debug(" propagateBack OUT ".center(70, "-"))
-        inputs = self.layers[0].propagateBack(hiddens)
-        if self.bias:
-            inputs = inputs[:,:-1]
-        return inputs
     def backPropagate(self, targets):
         #debug(" backPropagate OUT ".center(70, "-"))
         delta_inputs = self.layers[1].backPropagate(targets=targets)
@@ -237,9 +263,11 @@ class DeepNetwork(AbstractNetwork):
     def __init__(self, n_nodes, bias=True):
         self.bias = bias
         self.n_nodes = n_nodes
+        self.prepare_iterations = 1
         if bias:
             n_nodes[0] += 1 # bias
         self.layers = [Layer(n_in, n_out) for n_in, n_out in zip(n_nodes[:-1], n_nodes[1:])]
+        self.layers[-1].squash = SoftmaxCrossEntropy
         self.layers += [Layer(n_nodes[-1], n_nodes[-1])] # descramble autoencoder
     def propagate(self, inputs):
         if self.bias:
@@ -257,9 +285,10 @@ class DeepNetwork(AbstractNetwork):
     def updateWeights(self, learn):
         for layer in self.layers:
             if layer != self.layers[-1]:
-                learn = learn / len(self.layers)
+                learn = learn / self.prepare_iterations
             layer.updateWeights(learn)
     def prepare(self, inputs, iterations, learn):
+        self.prepare_iterations = iterations
         info(" PREPARE ".center(70, "o"))
         if self.bias:
             inputs = np.append(inputs, np.ones((inputs.shape[0],1)), axis=1)
@@ -285,14 +314,14 @@ def demo(iterations=1000, learn=0.05):
                        [1.0,0.0, 1.0],
                        [1.0,1.0, 0.0]])
 
-    _patterns = np.mat([[0.0,0.0, 0.0,0.0],
+    patterns = np.mat([[0.0,0.0, 0.0,0.0],
                        [0.0,1.0, 0.0,1.0],
                        [1.0,0.0, 1.0,0.0],
                        [1.0,1.0, 1.0,1.0]])
-    inputs, targets = patterns[:,:-1], patterns[:,-1:]
+    inputs, targets = patterns[:,:-2], patterns[:,-2:]
     # create a network
-    #net = ShallowNetwork(2, 5, 1)
-    net = DeepNetwork([2, 5, 1])
+    net = ShallowNetwork(2, 5, 2, squash=SoftmaxCrossEntropy)
+    #net = DeepNetwork([2, 5, 1])
     # train it with some patterns
     #for i in range(1):
     #    net.prepare(patterns, 50000, 0.05)
@@ -311,8 +340,6 @@ if __name__ == "__main__":
     if __debug__:
         import doctest
         doctest.testmod()
-    try:
-        timed(demo)
-    except:
-        print_exc_plus()
+    timed(demo)
+
 
