@@ -15,9 +15,9 @@ def load_patterns(filename):
         row = line.strip().split(" ")
         number, picture = int(row[0]), map(float, row[1:])
         # normalize inputs
-        inputs.append(picture) # already [-1, 1]
+        inputs.append(picture/2.0 + 1.0) # was [-1, 1]
         # digitalize outputs
-        targets.append([(i == number) and 1 or -1 for i in range(10)])
+        targets.append([float(i == number) for i in range(10)])
     print stats(inputs, targets)
     print "-"*70
     return np.mat(inputs), np.mat(targets)

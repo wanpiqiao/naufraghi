@@ -16,7 +16,7 @@ def load_patterns(filename):
         # normalize inputs
         inputs.append([float(i)/100 for i in stroke])
         # digitalize outputs
-        targets.append([int(i == number) for i in range(10)])
+        targets.append([float(i == number) for i in range(10)])
     print stats(inputs, targets)
     print "-"*70
     return np.mat(inputs), np.mat(targets)
