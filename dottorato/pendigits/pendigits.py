@@ -2,8 +2,10 @@
 # -*- encoding: utf-8 -*-
 # Copyright (C) 2008 Matteo Bertini
 
+import os
 import sys
-sys.path.append("../")
+if os.path.abspath("../") not in sys.path:
+    sys.path.append(os.path.abspath("../"))
 from bplnn import *
 
 def load_patterns(filename):
