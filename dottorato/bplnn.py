@@ -95,6 +95,25 @@ def softmax(v):
     vv = np.exp(v - np.max(v, axis=1))
     return vv / np.sum(vv, axis=1)
 
+class LinearSumOfSquares:
+    @staticmethod
+    def delta_outputs(layer):
+        #debug("targets = %s\noutputs = %s" % (layer.targets, layer.outputs))
+        return (layer.targets - layer.outputs)
+    @staticmethod
+    def outputs(layer):
+        return layer.activations
+    @staticmethod
+    def delta_inputs(layer):
+        #debug("inputs = %s\ndelta_outputs = %s\nweights.T = %s" % (layer.inputs, layer.delta_outputs, layer.weights.T))
+        return (layer.delta_outputs * layer.weights.T)
+    @staticmethod
+    def errors(layer):
+        return np.sum(np.mat(np.array(layer.targets - layer.outputs)**2), axis=1)
+    @staticmethod
+    def delta_weights(layer):
+        #debug("inputs.T = %s\ndelta_outputs = %s" % (layer.inputs.T, layer.delta_outputs))
+        return (layer.inputs.T * layer.delta_outputs)
 
 class SigmoidSumOfSquares:
     @staticmethod
@@ -267,7 +286,6 @@ class DeepNetwork(AbstractNetwork):
         if bias:
             n_nodes[0] += 1 # bias
         self.layers = [Layer(n_in, n_out) for n_in, n_out in zip(n_nodes[:-1], n_nodes[1:])]
-        self.layers[-1].squash = SoftmaxCrossEntropy
         self.layers += [Layer(n_nodes[-1], n_nodes[-1])] # descramble autoencoder
     def propagate(self, inputs):
         if self.bias:
