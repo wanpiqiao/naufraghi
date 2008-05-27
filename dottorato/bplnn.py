@@ -199,27 +199,32 @@ class Layer:
 
 
 class AbstractNetwork:
-    def train(self, inputs, targets, iterations=1000, learn=0.05, saveimages=False):
+    def train(self, inputs, targets, iterations=1000, learn=0.05, perturbate=False, saveimages=False):
         count = iterations
         step = 10 + int(math.sqrt(iterations))
         num = inputs.shape[0]
         batch_size = 1 + num / 20 # numbatches... tune it for you system/dataset
         info((" TRAIN batch_size=%s " % batch_size).center(70, "#"))
         ind = np.arange(num)
-        weights_before = []
         if saveimages:
             info("Saving before images")
+            weights_before = []
             for c, layer in enumerate(self.layers):
                 weights_before.append(layer.weights.copy())
                 pylab.imshow(layer.weights, cmap=pylab.cm.gray)
                 pylab.savefig("%s (%1d) before" % (self, c), dpi=50)
+        if perturbate:
+            pert_inputs = inputs + perturbate*np.random.randn(*inputs.shape)
         while count:
             count -= 1
             error = 0.0
             np.random.shuffle(ind)
             for batch in range(0, num, batch_size):
                 selection = ind[batch:batch + batch_size]
-                self.propagate(inputs[selection])
+                if perturbate:
+                    self.propagate(pert_inputs[selection])
+                else:
+                    self.propagate(inputs[selection])
                 self.backPropagate(targets[selection])
                 error += self.errors.sum()
                 self.updateWeights(learn)
@@ -318,7 +323,7 @@ class DeepNetwork(AbstractNetwork):
             if layer != self.layers[-1]:
                 learn = learn / len(self.layers) #self.prepare_iterations
             layer.updateWeights(learn)
-    def prepare(self, inputs, iterations, learn):
+    def prepare(self, inputs, iterations, learn, perturbate=False):
         self.prepare_iterations = iterations
         info(" PREPARE ".center(70, "o"))
         if self.bias:
@@ -328,7 +333,7 @@ class DeepNetwork(AbstractNetwork):
             info((" (%d) %s " % (c, layer)).center(70, "#"))
             auto_net = ShallowNetwork(layer.n_in, layer.n_out, layer.n_in, bias=False)
             auto_net.layers[0].weights = layer.weights
-            auto_net.train(inputs + 0.1*np.random.randn(*inputs.shape), inputs, iters[c])
+            auto_net.train(inputs, inputs, iters[c], perturbate=perturbate)
             layer.weights = auto_net.layers[0].weights
             auto_net.propagate(inputs)
             inputs = auto_net.layers[0].outputs

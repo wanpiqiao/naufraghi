@@ -33,11 +33,11 @@ def run():
     net = DeepNetwork([n_in, 20, 15, n_out])
     print net
     info(" auto train ".center(70, "-"))
-    net.prepare(inputs, 200, 0.05)
+    net.prepare(inputs, 300, 0.05, perturbate=False)
     info(" auto test ".center(70, "-"))
     net.test(test_inputs, test_targets)
     info(" classify train ".center(70, "-"))
-    net.train(inputs, targets, 400, 0.05, saveimages=True)
+    net.train(inputs, targets, 500, 0.05, saveimages=False)
     info(" classify test ".center(70, "-"))
     net.test(test_inputs, test_targets)
 
