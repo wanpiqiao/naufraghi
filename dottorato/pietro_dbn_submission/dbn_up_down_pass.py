@@ -14,10 +14,10 @@ import rbm
 reload(rbm)
 
 
-# the data ends up in a nclasses x ntrain x sizepatch array 'data'
+print "the data ends up in a nclasses x ntrain x sizepatch array 'data'"
 
-SAVEPATH = '/unsafe/berkes/'
-DATAPATH = '/unsafe/berkes/'
+SAVEPATH = './'
+DATAPATH = './'
 tmp = sio.loadmat(DATAPATH+'binaryalphadigs.mat')
 NTRAIN = 39
 CLASSES = [10, 12, 28] # A, C, S
@@ -25,7 +25,7 @@ NCLASSES = len(CLASSES)
 I, L = 20*16, 3
 N = NTRAIN*NCLASSES
 
-# organize data
+print "organize data"
 data = zeros((NCLASSES, NTRAIN, I))
 labels = zeros((NCLASSES, NTRAIN, L))
 for k in range(L):
@@ -33,7 +33,7 @@ for k in range(L):
         data[k,m,:] = (tmp['dat'][CLASSES[k],m].ravel()).astype('d')
         labels[k,m,k] = 1.
 
-# prepare observations, labels
+print "prepare observations, labels"
 perm = srandom.permutation(N)
 v = data.reshape(N, I)[perm,:]
 l = labels.reshape(N, L)[perm,:]
@@ -57,12 +57,12 @@ FINAL_MOMENTUM = 0.
 DECAY = 0.0002
 EPSILON = 0.2
 
-# load RBMs
+print "load RBMs"
 (obs_rbm,hid_rbm,pen_rbm,top) = private.pickle_from(SAVEPATH+'res1')
 
-# ### wake-sleep part
+print "### wake-sleep part"
 
-# define untied layers
+print "define untied layers"
 obs = rbm.Belief_Network_Layer(obs_rbm.I,obs_rbm.J,obs_rbm)
 hid = rbm.Belief_Network_Layer(hid_rbm.I,hid_rbm.J,hid_rbm)
 pen = rbm.Belief_Network_Layer(pen_rbm.I,pen_rbm.J,pen_rbm)
@@ -101,7 +101,7 @@ for n in range(NEPOCHS):
     print '* ', n, 'class errors:', class_error
 
 
-# classification
+print "classification"
 
 pv1, v1 = obs.sample_h(v)
 pv1, v1 = hid.sample_h(v1)
@@ -109,13 +109,13 @@ pv1, v1 = pen.sample_h(v1)
 
 rl = zeros((v.shape[0], NCLASSES)) + 1./NCLASSES
 
-# sampling top layer
+print "sampling top layer"
 ph, h = top.sample_h(v1, rl)
 pv2, v2, pl, rl = top.sample_vl(h)
 
-# inferred labels
+print "inferred labels"
 print rl.argmax(axis=1)
-# real labels
+print "real labels"
 print l.argmax(axis=1)
-# number of errors
+print "number of errors"
 print 'errors:', (rl.argmax(axis=1) != l.argmax(axis=1)).sum()

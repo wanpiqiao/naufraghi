@@ -14,10 +14,10 @@ import rbm
 reload(rbm)
 
 
-# the data ends up in a nclasses x ntrain x sizepatch array 'data'
+print "the data ends up in a nclasses x ntrain x sizepatch array 'data'"
 
-SAVEPATH = '/unsafe/berkes/'
-DATAPATH = '/unsafe/berkes/'
+SAVEPATH = './'
+DATAPATH = './'
 tmp = sio.loadmat(DATAPATH+'binaryalphadigs.mat')
 NTRAIN = 39
 CLASSES = [10, 12, 28] # A, C, S
@@ -25,7 +25,7 @@ NCLASSES = len(CLASSES)
 I, L = 20*16, 3
 N = NTRAIN*NCLASSES
 
-# organize data
+print "organize data"
 data = zeros((NCLASSES, NTRAIN, I))
 labels = zeros((NCLASSES, NTRAIN, L))
 for k in range(L):
@@ -33,7 +33,7 @@ for k in range(L):
         data[k,m,:] = (tmp['dat'][CLASSES[k],m].ravel()).astype('d')
         labels[k,m,k] = 1.
 
-# prepare observations, labels
+print "prepare observations, labels"
 perm = srandom.permutation(N)
 v = data.reshape(N, I)[perm,:]
 l = labels.reshape(N, L)[perm,:]
@@ -79,7 +79,7 @@ FINAL_MOMENTUM = 0.9
 DECAY = 0.0002
 EPSILON = 0.1
 
-# 3 layers
+print "3 layers"
 obs = rbm.RBM(I,100)
 hid = rbm.RBM(100,100)
 pen = rbm.RBM(100,100)
@@ -95,25 +95,26 @@ ph_pen, h_pen = pen.sample_h(ph_hid)
 train_RBM(top, ph_pen, l, NEPOCHS, INITIAL_MOMENTUM, FINAL_MOMENTUM, DECAY, EPSILON)
 ph_top, h_top = top.sample_h(ph_pen, l)
 
-# save results
-#private.pickle_to((obs,hid,pen,top), SAVEPATH+'res1')
+print "save results"
+private.pickle_to((obs,hid,pen,top), SAVEPATH+'res1')
 
-# reconstruct
+print "reconstruct"
 pv_top, v_top, pl_top, l_top = top.sample_vl(ph_top)
 pv_pen, v_pen = pen.sample_v(pv_top)
 pv_hid, v_hid = hid.sample_v(pv_pen)
 pv_obs, v_obs = obs.sample_v(pv_hid)
 
+print "show"
 show(v[5,:])
 show(pv_obs[5,:])
 
-# generate
+print "generate"
 gv = zeros((1, I)) + 0.5
 ghid, tmp = obs.sample_h(gv)
 gpen, tmp = hid.sample_h(ghid)
 gh, tmp = pen.sample_h(gpen)
 
-# class to generate
+print "class to generate"
 gl = scipy.array([[0.,0.,1.]])
 
 for k in range(2500):
