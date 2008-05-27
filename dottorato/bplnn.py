@@ -63,7 +63,8 @@ def timed(func):
     try:
         func()
     except:
-        print_exc_plus()
+        raise
+        #print_exc_plus()
     print "Time:", (time.time() - start_time)
 
 def stats(inputs, targets):
@@ -195,10 +196,10 @@ class Layer:
         return self.weights
     def __repr__(self):
         return "<Layer %d %d %s>" % (self.n_in, self.n_out, self.squash.__name__)
-        
-        
+
+
 class AbstractNetwork:
-    def train(self, inputs, targets, iterations=1000, learn=0.05):
+    def train(self, inputs, targets, iterations=1000, learn=0.05, saveimages=False):
         count = iterations
         step = 10 + int(math.sqrt(iterations))
         num = inputs.shape[0]
@@ -209,7 +210,7 @@ class AbstractNetwork:
         for c, layer in enumerate(self.layers):
             weights_before.append(layer.weights.copy())
             pylab.imshow(layer.weights, cmap=pylab.cm.gray)
-            pylab.savefig("%s (%1d) before" % (self, c))
+            pylab.savefig("%s (%1d) before" % (self, c), dpi=50)
         while count:
             count -= 1
             error = 0.0
@@ -224,10 +225,13 @@ class AbstractNetwork:
                 info("iter(%s) error = %s" % (count, error))
         for c, layer in enumerate(self.layers):
             pylab.imshow(layer.weights, cmap=pylab.cm.gray)
-            pylab.savefig("%s (%1d) post" % (self, c))
-    def test(self, inputs, targets):
-        info(" TEST ".center(70, "#"))
-        def cls(arg):
+            pylab.savefig("%s (%1d) post" % (self, c), dpi=50)
+            pylab.imshow(layer.weights - weights_before[c], cmap=pylab.cm.gray)
+            pylab.savefig("%s (%1d) diff" % (self, c), dpi=50)
+    def test(self, inputs, targets, verbose=True):
+        if verbose:
+            info(" TEST ".center(70, "#"))
+        def idx(arg):
             if arg.shape[1] == 1:
                 return int(arg > 0.5)
             else:
@@ -236,13 +240,18 @@ class AbstractNetwork:
         #    info("%s -> %s (%s)" % (inputs[i], cls(self.propagate(inputs[i])), cls(targets[i])))
         res = {}
         for i in range(inputs.shape[0]):
-            output = cls(self.propagate(inputs[i]))
-            target = cls(targets[i])
-            res.setdefault(target, {True: 0.0, False: 0.0})
-            res[target][target == output] += 1.0
-            res[target]["acc"] = 100 * res[target][True] / (res[target][True] + res[target][False])
-        info(pprint.pformat(res))
-        info("mean acc = %f" % np.mean([res[t]["acc"] for t in res]))
+            output = idx(self.propagate(inputs[i]))
+            target = idx(targets[i])
+            res.setdefault(target, {target: 0.0})
+            res[target][output] = res[target].get(output, 0.0) + 1.0
+        for target in res:
+            res[target]["acc"] = 100 * res[target][target] /\
+                                 sum([res[target][o] for o in res[target] if o != "acc"])
+        mean_acc = np.mean([res[t]["acc"] for t in res])
+        if verbose:
+            info(pprint.pformat(res))
+            info("mean_acc = %f" % mean_acc)
+        return mean_acc, res
 
 
 class ShallowNetwork(AbstractNetwork):
@@ -301,9 +310,9 @@ class DeepNetwork(AbstractNetwork):
             delta_inputs = layer.backPropagate(delta_outputs=delta_inputs)
         return delta_inputs
     def updateWeights(self, learn):
-        for layer in reversed(self.layers):
+        for layer in self.layers:
             if layer != self.layers[-1]:
-                learn = learn / len(self.layers)#self.prepare_iterations
+                learn = learn / len(self.layers) #self.prepare_iterations
             layer.updateWeights(learn)
     def prepare(self, inputs, iterations, learn):
         self.prepare_iterations = iterations

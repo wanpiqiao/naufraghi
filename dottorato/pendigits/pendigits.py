@@ -21,6 +21,7 @@ def load_patterns(filename):
         targets.append([float(i == number) for i in range(10)])
     print stats(inputs, targets)
     print "-"*70
+    #return np.mat(inputs) * 1.2 - 0.1, np.mat(targets) * 1.2 - 0.1
     return np.mat(inputs), np.mat(targets)
 
 def run():
@@ -31,10 +32,13 @@ def run():
     n_out = targets.shape[1] # 10
     net = DeepNetwork([n_in, 20, 15, n_out])
     print net
+    info(" auto train ".center(70, "-"))
     net.prepare(inputs, 200, 0.05)
-    net.test(test_inputs, test_targets)
     info(" auto test ".center(70, "-"))
-    net.train(inputs, targets, 400)
+    net.test(test_inputs, test_targets)
+    info(" classify train ".center(70, "-"))
+    net.train(inputs, targets, 400, 0.05, saveimages=True)
+    info(" classify test ".center(70, "-"))
     net.test(test_inputs, test_targets)
 
 
