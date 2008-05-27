@@ -207,10 +207,12 @@ class AbstractNetwork:
         info((" TRAIN batch_size=%s " % batch_size).center(70, "#"))
         ind = np.arange(num)
         weights_before = []
-        for c, layer in enumerate(self.layers):
-            weights_before.append(layer.weights.copy())
-            pylab.imshow(layer.weights, cmap=pylab.cm.gray)
-            pylab.savefig("%s (%1d) before" % (self, c), dpi=50)
+        if saveimages:
+            info("Saving before images")
+            for c, layer in enumerate(self.layers):
+                weights_before.append(layer.weights.copy())
+                pylab.imshow(layer.weights, cmap=pylab.cm.gray)
+                pylab.savefig("%s (%1d) before" % (self, c), dpi=50)
         while count:
             count -= 1
             error = 0.0
@@ -223,11 +225,13 @@ class AbstractNetwork:
                 self.updateWeights(learn)
             if not count % step:
                 info("iter(%s) error = %s" % (count, error))
-        for c, layer in enumerate(self.layers):
-            pylab.imshow(layer.weights, cmap=pylab.cm.gray)
-            pylab.savefig("%s (%1d) post" % (self, c), dpi=50)
-            pylab.imshow(layer.weights - weights_before[c], cmap=pylab.cm.gray)
-            pylab.savefig("%s (%1d) diff" % (self, c), dpi=50)
+        if saveimages:
+            info("Saving post and diff images")
+            for c, layer in enumerate(self.layers):
+                pylab.imshow(layer.weights, cmap=pylab.cm.gray)
+                pylab.savefig("%s (%1d) post" % (self, c), dpi=50)
+                pylab.imshow(layer.weights - weights_before[c], cmap=pylab.cm.gray)
+                pylab.savefig("%s (%1d) diff" % (self, c), dpi=50)
     def test(self, inputs, targets, verbose=True):
         if verbose:
             info(" TEST ".center(70, "#"))
@@ -324,7 +328,7 @@ class DeepNetwork(AbstractNetwork):
             info((" (%d) %s " % (c, layer)).center(70, "#"))
             auto_net = ShallowNetwork(layer.n_in, layer.n_out, layer.n_in, bias=False)
             auto_net.layers[0].weights = layer.weights
-            auto_net.train(inputs, inputs, iters[c])
+            auto_net.train(inputs + 0.1*np.random.randn(*inputs.shape), inputs, iters[c])
             layer.weights = auto_net.layers[0].weights
             auto_net.propagate(inputs)
             inputs = auto_net.layers[0].outputs
