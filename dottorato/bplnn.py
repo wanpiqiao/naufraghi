@@ -301,9 +301,9 @@ class DeepNetwork(AbstractNetwork):
             delta_inputs = layer.backPropagate(delta_outputs=delta_inputs)
         return delta_inputs
     def updateWeights(self, learn):
-        for layer in self.layers:
+        for layer in reversed(self.layers):
             if layer != self.layers[-1]:
-                learn = learn / self.prepare_iterations
+                learn = learn / len(self.layers)#self.prepare_iterations
             layer.updateWeights(learn)
     def prepare(self, inputs, iterations, learn):
         self.prepare_iterations = iterations
@@ -314,9 +314,9 @@ class DeepNetwork(AbstractNetwork):
         for c, layer in enumerate(self.layers[:-1]):
             info((" (%d) %s " % (c, layer)).center(70, "#"))
             auto_net = ShallowNetwork(layer.n_in, layer.n_out, layer.n_in, bias=False)
-            auto_net.layers[1].weights = layer.weights.T
+            auto_net.layers[0].weights = layer.weights
             auto_net.train(inputs, inputs, iters[c])
-            layer.weights = auto_net.layers[1].weights.T
+            layer.weights = auto_net.layers[0].weights
             auto_net.propagate(inputs)
             inputs = auto_net.layers[0].outputs
     def dump(self):
