@@ -15,8 +15,8 @@ import pylab
 
 VERBOSE = 1
 
-if VERBOSE > 1:
-    np.seterr(over="raise")
+np.seterr(over="ignore") # Possible values [ ignore | warning | raise ]
+
 def debug(message):
     if VERBOSE > 1:
         print "DEBUG:", message
@@ -74,9 +74,8 @@ def stats(inputs, targets):
 
 
 def trace(s, sep='-'):
-    s = (" %s " % s).center(70, sep)
-    row = sep*len(s)
-    info("\n".join([row, s, row]))
+    message = (" %s " % s).center(70, sep)
+    info(message)
 
 
 def assertEqual(a, b, message=None):
@@ -166,13 +165,13 @@ class SoftmaxCrossEntropy:
 
 
 class Layer:
-    def __init__(self, n_in, n_out, squash=SigmoidSumOfSquares):
+    def __init__(self, n_in, n_out, rand=1.0, squash=SigmoidSumOfSquares):
         self.n_in = n_in
         self.n_out = n_out
         self.squash = squash
         self.inputs = None
         self.delta_inputs = None
-        self.weights = np.mat(np.random.randn(n_in, n_out)*1.0)
+        self.weights = np.mat(np.random.randn(n_in, n_out)*rand, dtype="float64")
         self.activations = None
         self.outputs = None
         self.delta_outputs = None
@@ -211,10 +210,10 @@ class Layer:
 class AbstractNetwork:
     def train(self, inputs, targets, iterations=1000, learn=0.05, perturbate=False, saveimages=False):
         count = iterations
-        step = 10 + int(math.sqrt(iterations))
+        step = 10 + int(math.sqrt(iterations)) / int(math.log(inputs.shape[1]))
         num = inputs.shape[0]
         batch_size = 1 + num / 20 # numbatches... tune it for you system/dataset
-        info((" TRAIN batch_size=%s " % batch_size).center(70, "#"))
+        trace("TRAIN batch_size=%s" % batch_size, "#")
         ind = np.arange(num)
         if saveimages:
             info("Saving before images")
@@ -249,7 +248,7 @@ class AbstractNetwork:
                 pylab.savefig("%s (%1d) diff" % (self, c), dpi=50)
     def test(self, inputs, targets, verbose=True):
         if verbose:
-            info(" TEST ".center(70, "#"))
+            trace("TEST", "#")
         def idx(arg):
             if arg.shape[1] == 1:
                 return int(arg > 0.5)
@@ -274,13 +273,13 @@ class AbstractNetwork:
 
 
 class ShallowNetwork(AbstractNetwork):
-    def __init__(self, n_in, n_hid, n_out, bias=True, squash=SigmoidSumOfSquares):
+    def __init__(self, n_in, n_hid, n_out, rand=1.0, bias=True, squash=SigmoidSumOfSquares):
         self.bias = bias
         self.n_nodes = [n_in, n_hid, n_out]
         if bias:
             n_in = n_in + 1
         random.seed(123)
-        self.layers = [Layer(n_in, n_hid), Layer(n_hid, n_out, squash=squash)]
+        self.layers = [Layer(n_in, n_hid, rand=rand), Layer(n_hid, n_out, rand=rand, squash=squash)]
     def propagate(self, inputs):
         if self.bias:
             inputs = np.append(inputs, np.ones((inputs.shape[0],1)), axis=1)
@@ -307,14 +306,14 @@ class ShallowNetwork(AbstractNetwork):
 
 
 class DeepNetwork(AbstractNetwork):
-    def __init__(self, n_nodes, bias=True):
+    def __init__(self, n_nodes, rand=0.1, bias=True):
         self.bias = bias
         self.n_nodes = n_nodes
         self.prepare_iterations = 1
         if bias:
             n_nodes[0] += 1 # bias
-        self.layers = [Layer(n_in, n_out) for n_in, n_out in zip(n_nodes[:-1], n_nodes[1:])]
-        self.layers += [Layer(n_nodes[-1], n_nodes[-1])] # descramble autoencoder
+        self.layers = [Layer(n_in, n_out, rand=rand) for n_in, n_out in zip(n_nodes[:-1], n_nodes[1:])]
+        self.layers += [Layer(n_nodes[-1], n_nodes[-1], rand=rand)] # descramble autoencoder
     def propagate(self, inputs):
         if self.bias:
             inputs = np.append(inputs, np.ones((inputs.shape[0],1)), axis=1)
@@ -335,12 +334,12 @@ class DeepNetwork(AbstractNetwork):
             layer.updateWeights(learn)
     def prepare(self, inputs, iterations, learn, perturbate=False):
         self.prepare_iterations = iterations
-        info(" PREPARE ".center(70, "o"))
+        trace("PREPARE", "o")
         if self.bias:
             inputs = np.append(inputs, np.ones((inputs.shape[0],1)), axis=1)
         iters = map(int, np.linspace(iterations, iterations/2, len(self.layers)))
         for c, layer in enumerate(self.layers[:-1]):
-            info((" (%d) %s " % (c, layer)).center(70, "#"))
+            trace("(%d) %s" % (c, layer), "o")
             auto_net = ShallowNetwork(layer.n_in, layer.n_out, layer.n_in, bias=False)
             auto_net.layers[0].weights = layer.weights
             auto_net.train(inputs, inputs, iters[c], perturbate=perturbate)
