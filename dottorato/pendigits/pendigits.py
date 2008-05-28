@@ -24,7 +24,7 @@ def load_patterns(filename):
     print stats(inputs, targets)
     print "-"*70
     #return np.mat(inputs) * 1.2 - 0.1, np.mat(targets) * 1.2 - 0.1
-    return np.mat(inputs), np.mat(targets)
+    return np.mat(inputs, dtype="float64"), np.mat(targets, dtype="float64")
 
 def run():
     trace("PenDigits dataset", "#")

@@ -19,12 +19,12 @@ def load_patterns(filename):
         row = line.strip().split(" ")
         number, picture = int(row[0]), map(float, row[1:])
         # normalize inputs
-        inputs.append(picture/2.0 + 1.0) # was [-1, 1]
+        inputs.append([p/2.0 + 1.0 for p in picture]) # was [-1, 1]
         # digitalize outputs
         targets.append([float(i == number) for i in range(10)])
     print stats(inputs, targets)
     print "-"*70
-    return np.mat(inputs), np.mat(targets)
+    return np.mat(inputs, dtype="float64"), np.mat(targets, dtype="float64")
 
 def run():
     trace("USPS dataset", "#")
@@ -35,10 +35,10 @@ def run():
     net = DeepNetwork([n_in, 500, 250, 100, n_out])
     print net
     trace("AutoTrain")
-    net.prepare(inputs, 10, 0.05)
+    net.prepare(inputs, 100, 0.05, perturbate=0.1)
     net.test(test_inputs, test_targets)
     trace("FineTrain")
-    net.train(inputs, targets, 10)
+    net.train(inputs, targets, 200)
     net.test(test_inputs, test_targets)
 
 
