@@ -6,6 +6,8 @@ import os
 import sys
 if os.path.abspath("../") not in sys.path:
     sys.path.append(os.path.abspath("../"))
+import bplnn
+reload(bplnn)
 from bplnn import *
 
 def load_patterns(filename):
@@ -33,11 +35,11 @@ def run():
     net = DeepNetwork([n_in, 20, 15, n_out])
     print net
     info(" auto train ".center(70, "-"))
-    net.prepare(inputs, 300, 0.05, perturbate=False)
+    net.prepare(inputs, 200, 0.05, perturbate=0.1)
     info(" auto test ".center(70, "-"))
     net.test(test_inputs, test_targets)
     info(" classify train ".center(70, "-"))
-    net.train(inputs, targets, 500, 0.05, saveimages=False)
+    net.train(inputs, targets, 800, 0.1, saveimages=False)
     info(" classify test ".center(70, "-"))
     net.test(test_inputs, test_targets)
 

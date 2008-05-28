@@ -6,6 +6,8 @@ import os
 import sys
 if os.path.abspath("../") not in sys.path:
     sys.path.append(os.path.abspath("../"))
+import bplnn
+reload(bplnn)
 from bplnn import *
 import gzip
 

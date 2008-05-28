@@ -346,3 +346,4 @@ INFO: {0: {0: 337.0, 1: 1.0, 8: 24.0, 9: 1.0, 'acc': 92.837465564738295},
 INFO: mean_acc = 94.676365 <--- best so far
 Time: 423.494291782
 
+Problema, con 800 epoche senza preparazione fa 95.06... 96.37 con 400 epoche di preparazione
