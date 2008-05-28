@@ -89,8 +89,18 @@ def assertEqual(a, b, message=None):
         raise ValueError(message)
 
 def sigmoid(v):
+    """
+    >>> sigmoid(0.0)
+    0.5
+    >>> sigmoid(np.array([100.0, -100.0], dtype="float32"))
+    array([ 1.,  0.], dtype=float32)
+    >>> sigmoid(np.array([100.0, -100.0], dtype="float64"))
+    array([  1.00000000e+00,   3.72007598e-44])
+    """
     return 1.0 / (1.0 + np.exp(-v))
 def sigmoid_deriv(v):
+    """
+    """
     return np.multiply(v, (1.0 - v))
 def softmax(v):
     vv = np.exp(v - np.max(v, axis=1))
