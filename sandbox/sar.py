@@ -43,11 +43,12 @@ def main(args):
         sys.exit(0)
 
     searchre, replacere, glob_filter = args
+    searchre = re.compile(searchre, re.DOTALL)
 
     for filename in list_recursive_files(os.getcwd(), glob_filter):
         sys.stderr.write("Processing file %s... " % filename)
         res = orig = open(filename).read()
-        res = re.sub(searchre, replacere, res)
+        res = searchre.sub(replacere, res)
 
         if orig != res:
             sys.stderr.write("MATCH FOUND")
@@ -62,4 +63,3 @@ def main(args):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
-
