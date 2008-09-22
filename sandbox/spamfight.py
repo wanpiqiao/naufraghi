@@ -29,6 +29,6 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         print "SpamFight, generate traffic against spammed urls!"
         print "Usage:"
-        print "  python %s | xargs curl > /dev/null" % sys.argv[0]
+        print "  python %s | xargs -n1 -P5 curl > /dev/null" % sys.argv[0]
     else:
         run()
