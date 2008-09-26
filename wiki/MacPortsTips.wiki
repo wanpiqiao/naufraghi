@@ -1,0 +1,10 @@
+#summary Some macports tips
+#labels Featured
+
+= Some manteniance tips =
+
+Cleanup all deactivated ports (forcing the removal, hoping not to break too much)
+
+{{{
+sudo port installed | tail -r | grep -v "(active)" | sudo xargs -n2 port -f uninstall
+}}}
