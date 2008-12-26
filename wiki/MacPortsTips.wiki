@@ -6,5 +6,5 @@
 Cleanup all deactivated ports (forcing the removal, hoping not to break too much)
 
 {{{
-port installed | tail -r | grep -v "(active)" | sudo xargs -n2 port -f uninstall
+port installed | tail -r | grep -v "(active)" | tail -n +2 | sudo xargs -n2 port -f uninstall
 }}}
