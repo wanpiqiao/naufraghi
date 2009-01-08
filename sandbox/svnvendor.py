@@ -39,10 +39,12 @@ def vendor_upgrade_svn(src, dst):
     added = src_tracked - dst_tracked
     removed = dst_tracked - src_tracked
     print "%d Modified, %d Added, %d Removed" % (len(modified), len(added), len(removed))
-    
+
     print "Differences:"
     for tracked in sorted(modified):
         if isdir(join(src, tracked)):
+            # This represents a property's change. We don't track properties
+            # (like svn export does too).
             print "M [DIR ] %s" % tracked
         else:
             print "M [FILE] %s" % tracked
@@ -57,17 +59,17 @@ def vendor_upgrade_svn(src, dst):
             shutil.copy2(join(src, tracked), join(dst, tracked))
         call(["svn", "add", "--depth", "empty", join(dst, tracked)])
 
-    for tracked in sorted(removed):
+    for tracked in sorted(removed, reverse=True):
         if isdir(join(dst, tracked)):
             print "D [DIR ] %s" % tracked
-            call(["svn", "rm", join(dst, tracked)])
         else:
             print "D [FILE] %s" % tracked
+        call(["svn", "rm", join(dst, tracked)])
     print "\nDone!\n\n"
 
-    
+
 if __name__ == "__main__":
-    print "Verdor branch management tool (svn version)"
+    print "Vendor branch management tool (svn version)"
     if len(sys.argv) > 2:
         src = abspath(sys.argv[1])
         dst = abspath(sys.argv[2])
@@ -80,4 +82,3 @@ if __name__ == "__main__":
     else:
         print "\nUsage:"
         print "  %s srcdir svndir" % sys.argv[0]
-
