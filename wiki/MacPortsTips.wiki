@@ -1,7 +1,7 @@
 #summary Some macports tips
 #labels Featured
 
-= Some manteniance tips =
+= Some maintenance tips =
 
 Cleanup all deactivated ports (forcing the removal, hoping not to break too much)
 
