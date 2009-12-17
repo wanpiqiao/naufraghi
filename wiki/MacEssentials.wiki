@@ -17,7 +17,7 @@
   * [http://www.google.it/search?q=letexit letexit]
   * [http://www.google.it/search?q=macports macports]
   * [http://www.google.it/search?q=macvim macvim]
-  * [http://www.google.it/search?q=nomachine+mx nomachine+mx]
+  * [http://www.google.it/search?q=nomachine+nx nomachine+nx]
   * [http://www.google.it/search?q=perian perian]
   * [http://www.google.it/search?q=realplayer realplayer]
   * [http://www.google.it/search?q=silverlight silverlight]
