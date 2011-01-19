@@ -31,7 +31,7 @@ def getContentsStats(basepath):
     return [(gsize(i), max(os.stat(i)[-3:]), i) for i in ls(".")]
 
 ################################################################################
-# http://kassiopeia.juls.savba.sk/~garabik/software/pydf/
+# Taken from: http://kassiopeia.juls.savba.sk/~garabik/software/pydf/
 ################################################################################
 from math import log
 def hfnum(size, base):
